@@ -2,7 +2,7 @@
 id: HU-015
 tipo: historia-de-usuario
 titulo: "Crear profesional"
-estado: Pendiente de aprobación
+estado: Implementada en corte S4; endurecimiento de casos de unicidad pendiente
 epica: "[[EP-003-administracion-de-catalogos-y-profesionales]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 3"
@@ -29,9 +29,9 @@ Los profesionales son creados por ADMIN y todos los datos del laboratorio son si
 ## Esfuerzo
 **Nivel:** Alto. **Justificación de dificultad:** combina identidad, privilegios, unicidad y datos sintéticos.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir contrato de alta ADMIN.** Dificultad: Medio. Documentar campos sin revelar credenciales.
-- [ ] **T-02 — Modelar/validar profesional.** Dificultad: Alto. Relacionarlo con usuario y preservar unicidad necesaria.
-- [ ] **T-03 — Integrar UI y pruebas.** Dificultad: Medio. Probar ADMIN/no ADMIN y datos sintéticos.
+- [x] **T-01 — Definir contrato de alta ADMIN.** Dificultad: Medio. Documentar campos sin revelar credenciales.
+- [x] **T-02 — Modelar/validar profesional.** Dificultad: Alto. Relacionarlo con usuario y preservar unicidad necesaria.
+- [x] **T-03 — Integrar UI y pruebas.** Dificultad: Medio. Probar ADMIN/no ADMIN y datos sintéticos.
 ## Criterios de aceptación
 ### CA-01 — Alta autorizada
 **Dado** ADMIN y datos sintéticos válidos, **cuando** crea un profesional, **entonces** se crea una identidad con rol PROFESSIONAL y sus datos profesionales.
@@ -46,10 +46,11 @@ Los profesionales son creados por ADMIN y todos los datos del laboratorio son si
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `OfferIntegrationTest`, V4, `AdminOfferScreen` | Crea identidad con rol `PROFESSIONAL` y datos sintéticos. |
+| CA-02 | Verificado | `OfferIntegrationTest` | Actor USER recibe 403. |
+| CA-03 / DoD | Parcial | Unicidad en esquema/servicio; prueba de alta válida | Falta añadir una prueba de duplicidad explícita. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Alta ADMIN implementada y probada en V4; queda prueba explícita de duplicidad para cerrar CA-03.
 ## Notas y decisiones
 - Los campos de identidad se concretan en contrato, sin contradecir RF-01/RF-07.

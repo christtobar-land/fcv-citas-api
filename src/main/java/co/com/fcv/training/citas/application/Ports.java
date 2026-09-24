@@ -24,6 +24,18 @@ public final class Ports {
         void createInitial(Long userId, Long planId);
     }
 
+    public interface Offer {
+        List<SpecialtyView> specialties();
+        SpecialtyView createSpecialty(String code, String name, short durationMinutes, boolean general,
+                                      boolean requiresAdminApproval);
+        SpecialtyView patchSpecialty(Short id, String name, Short durationMinutes, Boolean general,
+                                     Boolean requiresAdminApproval, Boolean active);
+        ProfessionalView createProfessional(Long userId, String professionalCode, String licenseNumber);
+        void replaceSpecialties(Long professionalId, List<Short> specialtyIds, Short primarySpecialtyId);
+        void replaceLocations(Long professionalId, List<Short> locationIds);
+        void setProfessionalActive(Long professionalId, boolean active);
+    }
+
     public interface Sessions {
         void save(RefreshSession session);
         Optional<RefreshSession> lockByJtiHash(String hash);
@@ -67,4 +79,8 @@ public final class Ports {
                                       short regimeId, String regimeCode, String regimeName,
                                       String code, String name) {}
     public record InsurancePlan(Long id) {}
+    public record SpecialtyView(short id, String code, String name, short appointmentDurationMinutes,
+                                boolean general, boolean requiresAdminApproval, boolean active) {}
+    public record ProfessionalView(Long id, Long userId, String professionalCode, String licenseNumber,
+                                   boolean active) {}
 }

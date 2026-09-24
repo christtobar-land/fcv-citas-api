@@ -2,7 +2,7 @@
 id: HU-014
 tipo: historia-de-usuario
 titulo: "Gestionar especialidades y duración"
-estado: Pendiente de aprobación
+estado: En desarrollo · catálogo ADMIN implementado; efecto sobre slots pendiente
 epica: "[[EP-003-administracion-de-catalogos-y-profesionales]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 3"
@@ -29,10 +29,10 @@ El profesional no puede sobrescribir la duración de una especialidad.
 ## Esfuerzo
 **Nivel:** Alto. **Justificación de dificultad:** su configuración determina el algoritmo de disponibilidad y reserva.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir catálogo/contrato.** Dificultad: Medio. Limitar duración a valores autorizados.
-- [ ] **T-02 — Aplicar validación y baja lógica.** Dificultad: Alto. Evitar duración inválida o eliminación referenciada.
+- [x] **T-01 — Definir catálogo/contrato.** Dificultad: Medio. Limitar duración a valores autorizados.
+- [x] **T-02 — Aplicar validación y baja lógica.** Dificultad: Alto. Evitar duración inválida o eliminación referenciada.
 - [ ] **T-03 — Conectar a consulta/reserva.** Dificultad: Alto. Exponer duración como fuente única de slots.
-- [ ] **T-04 — Probar reglas.** Dificultad: Alto. Cubrir 30, 60, activa/inactiva y rol ADMIN.
+- [x] **T-04 — Probar reglas.** Dificultad: Alto. Cubrir duración inválida y rol ADMIN; vigencia de slots queda pendiente.
 ## Criterios de aceptación
 ### CA-01 — Duración restringida
 **Dado** un ADMIN, **cuando** configura una especialidad, **entonces** solo puede establecer 30 o 60 minutos.
@@ -47,10 +47,11 @@ El profesional no puede sobrescribir la duración de una especialidad.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `OfferIntegrationTest` 2/2; `AdminOfferScreen` | 45 min responde 400; catálogo permite 30/60. |
+| CA-02 | Pendiente | — | Requiere disponibilidad/reserva. |
+| CA-03 / DoD | Parcial | V4 y baja lógica en `OfferJpaAdapter` | Efecto sobre nuevas reservas se verificará con agenda. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Contrato y catálogo ADMIN implementados en V4; CA-02/parte de CA-03 quedan ligados a disponibilidad.
 ## Notas y decisiones
 - Medicina General debe estar representada por el catálogo aprobado.

@@ -40,3 +40,21 @@ interface EpsPlansJpa extends JpaRepository<EpsPlanEntity, Long> {
 interface AffiliationsJpa extends JpaRepository<UserInsuranceAffiliationEntity, Long> {
     boolean existsByUser_IdAndCurrentTrue(Long userId);
 }
+
+interface SpecialtiesJpa extends JpaRepository<SpecialtyEntity, Short> {
+    java.util.List<SpecialtyEntity> findAllByOrderById();
+}
+
+interface ProfessionalsJpa extends JpaRepository<ProfessionalEntity, Long> {}
+
+interface ProfessionalSpecialtiesJpa extends JpaRepository<ProfessionalSpecialtyEntity, ProfessionalSpecialtyKey> {
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from ProfessionalSpecialtyEntity e where e.id.professionalId = :professionalId")
+    void deleteByProfessionalId(@org.springframework.data.repository.query.Param("professionalId") Long professionalId);
+}
+
+interface ProfessionalLocationsJpa extends JpaRepository<ProfessionalLocationEntity, ProfessionalLocationKey> {
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from ProfessionalLocationEntity e where e.id.professionalId = :professionalId")
+    void deleteByProfessionalId(@org.springframework.data.repository.query.Param("professionalId") Long professionalId);
+}

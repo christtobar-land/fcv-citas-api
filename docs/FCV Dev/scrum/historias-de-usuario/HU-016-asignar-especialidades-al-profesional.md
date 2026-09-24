@@ -2,7 +2,7 @@
 id: HU-016
 tipo: historia-de-usuario
 titulo: "Asignar especialidades al profesional"
-estado: Pendiente de aprobación
+estado: Implementada en corte S4; restricción efectiva en reserva pendiente
 epica: "[[EP-003-administracion-de-catalogos-y-profesionales]]"
 esfuerzo: Medio
 sprint_sugerido: "Incremento 3"
@@ -29,9 +29,9 @@ La relación es N:M; se requiere exactamente la marcación primaria que indique 
 ## Esfuerzo
 **Nivel:** Medio. **Justificación de dificultad:** aplica N:M, vigencia y una regla de primariedad.
 ## Tareas de desarrollo
-- [ ] **T-01 — Modelar asociación N:M.** Dificultad: Medio. Garantizar integridad y primaria aprobada.
-- [ ] **T-02 — Exponer gestión ADMIN.** Dificultad: Medio. Validar especialidad activa y rol.
-- [ ] **T-03 — Probar y reflejar en UI.** Dificultad: Medio. Cubrir múltiple, primaria y reserva no habilitada.
+- [x] **T-01 — Modelar asociación N:M.** Dificultad: Medio. Garantizar integridad y primaria aprobada.
+- [x] **T-02 — Exponer gestión ADMIN.** Dificultad: Medio. Validar especialidad activa y rol.
+- [x] **T-03 — Probar y reflejar en UI.** Dificultad: Medio. Cubrir múltiple y primaria; reserva no habilitada queda pendiente.
 ## Criterios de aceptación
 ### CA-01 — Múltiples especialidades
 **Dado** ADMIN, profesional y especialidades activas, **cuando** realiza asignaciones válidas, **entonces** el profesional puede tener una o más asociaciones.
@@ -46,10 +46,11 @@ La relación es N:M; se requiere exactamente la marcación primaria que indique 
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `OfferIntegrationTest`, V4, `AdminOfferScreen` | Se persisten múltiples asociaciones activas. |
+| CA-02 | Verificado | `OfferIntegrationTest` | La primaria debe pertenecer al conjunto enviado. |
+| CA-03 / DoD | Parcial | Validación de especialidad activa en adaptador | Efecto en búsqueda/reserva requiere HU-021. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Asociación N:M y primaria implementadas en V4; la restricción de reserva queda pendiente de agenda.
 ## Notas y decisiones
 - La unicidad exacta de primaria se justificará en modelo/contrato.

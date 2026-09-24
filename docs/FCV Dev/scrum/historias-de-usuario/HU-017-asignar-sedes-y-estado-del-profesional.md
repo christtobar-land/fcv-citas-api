@@ -2,7 +2,7 @@
 id: HU-017
 tipo: historia-de-usuario
 titulo: "Asignar sedes y estado del profesional"
-estado: Pendiente de aprobación
+estado: Implementada en corte S4; publicación de disponibilidad pendiente
 epica: "[[EP-003-administracion-de-catalogos-y-profesionales]]"
 esfuerzo: Medio
 sprint_sugerido: "Incremento 3"
@@ -29,9 +29,9 @@ Las dos sedes son catálogo fijo. La habilitación es requisito de agenda.
 ## Esfuerzo
 **Nivel:** Medio. **Justificación de dificultad:** combina N:M de sedes, estado y reglas de agenda.
 ## Tareas de desarrollo
-- [ ] **T-01 — Modelar asignación/estado.** Dificultad: Medio. Usar catálogo fijo y relación normalizada.
-- [ ] **T-02 — Aplicar gestión ADMIN.** Dificultad: Medio. Validar que solo se asigne sede fija.
-- [ ] **T-03 — Integrar/verificar agenda.** Dificultad: Medio. Probar inhabilitado o sede no asignada.
+- [x] **T-01 — Modelar asignación/estado.** Dificultad: Medio. Usar catálogo fijo y relación normalizada.
+- [x] **T-02 — Aplicar gestión ADMIN.** Dificultad: Medio. Validar que solo se asigne sede fija.
+- [x] **T-03 — Integrar/verificar agenda.** Dificultad: Medio. Integrar cliente ADMIN; publicación queda pendiente.
 ## Criterios de aceptación
 ### CA-01 — Sedes permitidas
 **Dado** ADMIN y un profesional, **cuando** asigna sedes, **entonces** puede asociar HIC, ICV o ambas, sin valores externos.
@@ -46,10 +46,11 @@ Las dos sedes son catálogo fijo. La habilitación es requisito de agenda.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `OfferIntegrationTest`, V4, `AdminOfferScreen` | Solo sedes activas del catálogo; máximo dos. |
+| CA-02 | Verificado | `OfferIntegrationTest` | PATCH ADMIN cambia el estado persistido. |
+| CA-03 / DoD | Parcial | Estado/asignación disponibles para agenda | Falta impedir publicación en HU-018. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Sedes y estado ADMIN implementados en V4; restricción de publicación queda pendiente de disponibilidad.
 ## Notas y decisiones
 - No se define el efecto retroactivo sobre citas existentes al desactivar; debe mantener integridad PRD.

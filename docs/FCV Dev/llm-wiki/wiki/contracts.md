@@ -47,10 +47,26 @@ La respuesta solo incluye planes cuyo plan y EPS están activos. `POST`, `PUT`, 
 
 `POST /api/v1/auth/register` acepta el campo opcional `insurancePlanId` (entero positivo). Si se omite, no se crea afiliación. Si se informa, el plan debe existir y estar activo; de lo contrario responde `400` en Problem Details y no se crea el usuario. Una selección válida crea una fila en `user_insurance_affiliations` mediante FK, sin duplicar nombres de EPS, régimen o plan en `users`. La afiliación inicial deja `membership_number` nulo; el diligenciamiento posterior pertenece a HU-011 completa.
 
+## DECISIÓN — 2026-09-24 · Oferta administrable (HU-014 a HU-017)
+
+El corte S4 incorpora gestión ADMIN de especialidades, profesionales y sus asociaciones. Las rutas requieren access JWT con rol `ADMIN`; no se publican en el cliente como operaciones de usuario final.
+
+| Operación | Entrada | Éxito | Reglas principales |
+|---|---|---|---|
+| `GET /api/v1/admin/specialties` | — | `200` con especialidades | Incluye activas e inactivas para administración. |
+| `POST /api/v1/admin/specialties` | `code`, `name`, `appointmentDurationMinutes`, `general`, `requiresAdminApproval` | `201` | Duración solo 30/60; una especialidad general no requiere aprobación adicional. |
+| `PATCH /api/v1/admin/specialties/{id}` | Campos anteriores opcionales | `200` | Actualización lógica; no se borra físicamente una especialidad referenciada. |
+| `POST /api/v1/admin/professionals` | identidad sintética, `temporaryPassword`, `professionalCode`, `licenseNumber` | `201` | Crea identidad con rol `PROFESSIONAL`; solo ADMIN; unicidad de email/documento/código/matrícula. |
+| `PUT /api/v1/admin/professionals/{id}/specialties` | `specialtyIds`, `primarySpecialtyId` | `204` | Una o más especialidades activas; la primaria debe pertenecer a la selección. |
+| `PUT /api/v1/admin/professionals/{id}/locations` | `locationIds` | `204` | Una o ambas sedes del catálogo fijo; máximo dos y todas activas. |
+| `PATCH /api/v1/admin/professionals/{id}/active` | `{ "active": boolean }` | `204` | El estado se conserva para las reglas futuras de disponibilidad. |
+
+Las operaciones de asociación reemplazan atómicamente la selección anterior y mantienen relaciones normalizadas. La duración de la especialidad es la única fuente de slots; la consulta de disponibilidad y la reserva todavía no forman parte de este corte.
+
 ### Impacto cross-repo antes del cambio REST
 
-- `citas-api`: nuevo `pom.xml`, código de dominio/aplicación/adaptadores, migración Flyway, configuración, pruebas y este contrato.
-- `citas-web`: sin cambios en este incremento; HU-033 integrará las cuatro rutas, cookie y errores. Al ser endpoints nuevos, no hay cliente previo que migrar.
+- `citas-api`: entidades/puertos/servicios/adaptadores ADMIN, migración Flyway V4, pruebas y este contrato.
+- `citas-web`: cliente `adminOfferApi`, pantalla ADMIN para crear/configurar oferta y pruebas Vitest.
 - Compatibilidad: `/api/v1` fija la versión de este contrato; cambios posteriores requieren revisión de ambas partes. Migración: esquema inicial de identidad por Flyway. Pruebas: REST, seguridad, persistencia y `mvn test` en backend; prueba cross-repo cuando exista el cliente.
 
 ### Evidencia del corte de catálogos
@@ -59,6 +75,13 @@ La respuesta solo incluye planes cuyo plan y EPS están activos. `POST`, `PUT`, 
 - `citas-web`: `CATALOG-CONTRACT.md` registra rutas, representaciones, autenticación y límites de integración.
 - Validación: `CatalogIntegrationTest` 2/2 y suite Maven 11/11 sin fallos.
 - Validación adicional: registro sin plan, registro con plan activo, plan inexistente rechazado; frontend carga de catálogo y selección opcional cubiertos por Vitest.
+
+### Evidencia del corte de oferta administrable
+
+- `citas-api`: `V4__offer_catalog_and_professionals.sql`, adaptador JPA, `AdminOfferController` y `OfferIntegrationTest`.
+- `citas-web`: `src/admin/adminOfferApi.ts`, `AdminOfferScreen.tsx` y pruebas de rutas/headers.
+- Validación: `OfferIntegrationTest` 2/2; regresión `AuthIntegrationTest` 6/6 y `CatalogIntegrationTest` 2/2; frontend 13/13, lint y build PASS.
+- Pendiente explícito: CA-02 de HU-014, CA-03 de HU-016 y CA-03 de HU-017 requieren implementar disponibilidad/reserva para probar el efecto de la oferta.
 
 ## PREGUNTA ABIERTA
 

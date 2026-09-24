@@ -3,6 +3,8 @@ package co.com.fcv.training.citas.config;
 import co.com.fcv.training.citas.application.AuthService;
 import co.com.fcv.training.citas.application.CatalogService;
 import co.com.fcv.training.citas.application.Ports;
+import co.com.fcv.training.citas.application.ProfessionalService;
+import co.com.fcv.training.citas.application.SpecialtyService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -36,5 +38,12 @@ class ApplicationConfig {
 
     @Bean CatalogService catalogService(Ports.Catalogs catalogs) {
         return new CatalogService(catalogs);
+    }
+
+    @Bean SpecialtyService specialtyService(Ports.Offer offer) { return new SpecialtyService(offer); }
+
+    @Bean ProfessionalService professionalService(Ports.Accounts accounts, Ports.Passwords passwords,
+                                                  Ports.Offer offer, Ports.Transactions transactions) {
+        return new ProfessionalService(accounts, passwords, offer, transactions);
     }
 }
