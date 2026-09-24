@@ -1,6 +1,6 @@
 # citas-api
 
-Repositorio backend del proyecto. **No contiene implementación de negocio inicial**.
+Repositorio backend del proyecto. El incremento S2 contiene la implementación de identidad y autenticación de HU-005/006/007.
 
 ## Debe ser construido por el estudiante
 - Java 21 + Spring Boot 3.5.x + Maven.
