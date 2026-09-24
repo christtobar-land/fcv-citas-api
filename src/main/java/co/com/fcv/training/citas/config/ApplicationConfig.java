@@ -1,6 +1,7 @@
 package co.com.fcv.training.citas.config;
 
 import co.com.fcv.training.citas.application.AuthService;
+import co.com.fcv.training.citas.application.CatalogService;
 import co.com.fcv.training.citas.application.Ports;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,5 +32,9 @@ class ApplicationConfig {
     @Bean AuthService authService(Ports.Accounts accounts, Ports.Sessions sessions, Ports.Passwords passwords,
                                   Ports.Tokens tokens, Ports.Transactions transactions, Clock clock) {
         return new AuthService(accounts, sessions, passwords, tokens, transactions, clock);
+    }
+
+    @Bean CatalogService catalogService(Ports.Catalogs catalogs) {
+        return new CatalogService(catalogs);
     }
 }

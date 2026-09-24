@@ -22,3 +22,8 @@ interface SessionsJpa extends JpaRepository<SessionEntity, Long> {
     @Query("select s from SessionEntity s where s.tokenHash = :hash")
     Optional<SessionEntity> lockByTokenHash(@Param("hash") String hash);
 }
+
+interface AppointmentStatusesJpa extends JpaRepository<AppointmentStatusEntity, Short> {}
+interface RescheduleStatusesJpa extends JpaRepository<RescheduleStatusEntity, Short> {}
+interface InsuranceRegimesJpa extends JpaRepository<InsuranceRegimeEntity, Short> {}
+interface LocationsJpa extends JpaRepository<LocationEntity, Short> {}

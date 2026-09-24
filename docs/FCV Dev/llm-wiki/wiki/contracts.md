@@ -21,11 +21,31 @@ Access JWT y refresh JWT usan secretos distintos, tipo explícito y duraciones c
 
 Para sitios distintos, la cookie es `HttpOnly; Secure; SameSite=None`, con `Path=/api/v1/auth`. CORS permite credenciales únicamente al `FRONTEND_ORIGIN` configurado. Login, refresh y logout requieren `Origin` permitido cuando se envía y `X-Requested-With: XMLHttpRequest`; el perfil HTTP local usa cookie `SameSite=Lax` sin `Secure`. El cliente futuro deberá enviar credenciales y ese encabezado, guardar access únicamente según su diseño aprobado y eliminar su estado local al salir.
 
+## DECISIÓN — 2026-09-24 · HU-003
+
+Se aprueba el primer corte de catálogos fijos de solo lectura, consumible directamente por `citas-web` con access JWT:
+
+| Operación | Éxito | Representación |
+|---|---|---|
+| `GET /api/v1/catalogs/roles` | `200` | `{ id, code, name, description }[]` |
+| `GET /api/v1/catalogs/appointment-statuses` | `200` | `{ id, code, name, terminal }[]` |
+| `GET /api/v1/catalogs/reschedule-statuses` | `200` | `{ id, code, name, terminal }[]` |
+| `GET /api/v1/catalogs/insurance-regimes` | `200` | `{ id, code, name }[]` |
+| `GET /api/v1/catalogs/locations` | `200` | `{ id, code, name, address, city, department, active }[]` |
+
+Las cinco rutas requieren autenticación. No se publican operaciones de escritura; un `POST` autenticado sobre un catálogo responde `405`. Los valores se precargan mediante `V2__fixed_catalogs.sql`, incluyendo `HIC` e `ICV` con referencias públicas permitidas. La URL base del frontend queda documentada en `citas-web/CATALOG-CONTRACT.md`; la integración visual se reserva para HU-033 y las HU de agenda.
+
 ### Impacto cross-repo antes del cambio REST
 
 - `citas-api`: nuevo `pom.xml`, código de dominio/aplicación/adaptadores, migración Flyway, configuración, pruebas y este contrato.
 - `citas-web`: sin cambios en este incremento; HU-033 integrará las cuatro rutas, cookie y errores. Al ser endpoints nuevos, no hay cliente previo que migrar.
 - Compatibilidad: `/api/v1` fija la versión de este contrato; cambios posteriores requieren revisión de ambas partes. Migración: esquema inicial de identidad por Flyway. Pruebas: REST, seguridad, persistencia y `mvn test` en backend; prueba cross-repo cuando exista el cliente.
+
+### Evidencia del corte de catálogos
+
+- `citas-api`: migración Flyway V2, adaptadores JPA, servicio/controlador REST y `CatalogIntegrationTest`.
+- `citas-web`: `CATALOG-CONTRACT.md` registra rutas, representaciones, autenticación y límites de integración.
+- Validación: `CatalogIntegrationTest` 2/2 y suite Maven 11/11 sin fallos.
 
 ## PREGUNTA ABIERTA
 

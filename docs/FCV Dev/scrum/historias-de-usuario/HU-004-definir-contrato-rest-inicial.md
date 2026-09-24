@@ -2,7 +2,7 @@
 id: HU-004
 tipo: historia-de-usuario
 titulo: "Definir contrato REST inicial"
-estado: En desarrollo
+estado: En desarrollo · corte de catálogos aprobado
 epica: "[[EP-001-fundacion-y-contrato-del-producto]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 1"
@@ -30,9 +30,9 @@ El PRD exige REST/JSON directo, pero no fija rutas, formatos ni códigos. Estos 
 ## Esfuerzo
 **Nivel:** Alto. **Justificación de dificultad:** es un acuerdo transversal entre dos repositorios y múltiples roles.
 ## Tareas de desarrollo
-- [ ] **T-01 — Proponer contrato por capacidad.** Dificultad: Alto. Definir recursos/representaciones solo para HU aprobadas.
-- [ ] **T-02 — Documentar seguridad y errores.** Dificultad: Alto. Precisar autenticación, autorización, validación y respuestas sin filtrar secretos.
-- [ ] **T-03 — Revisar compatibilidad cross-repo.** Dificultad: Alto. Enumerar repositorios, archivos, migración y pruebas antes de cambiar contratos.
+- [x] **T-01 — Proponer contrato por capacidad.** Dificultad: Alto. Definir recursos/representaciones solo para HU aprobadas.
+- [x] **T-02 — Documentar seguridad y errores.** Dificultad: Alto. Precisar autenticación, autorización, validación y respuestas sin filtrar secretos.
+- [x] **T-03 — Revisar compatibilidad cross-repo.** Dificultad: Alto. Enumerar repositorios, archivos, migración y pruebas antes de cambiar contratos.
 ## Criterios de aceptación
 ### CA-01 — Contrato sin ambigüedad operativa
 **Dado** una HU aprobada, **cuando** frontend y backend revisan su contrato, **entonces** conocen representación, validaciones, respuestas y reglas de acceso necesarias sin deducirlas de pantallas.
@@ -41,17 +41,19 @@ El PRD exige REST/JSON directo, pero no fija rutas, formatos ni códigos. Estos 
 ### CA-03 — Cambio trazable
 **Dado** un cambio futuro de contrato, **cuando** se planifica, **entonces** identifica ambos repositorios, compatibilidad, migración y pruebas.
 ## Definition of Done
-- [ ] CA-01 a CA-03 tienen documentación revisable y evidencia de compatibilidad cuando exista implementación.
-- [ ] No se fijan rutas/formats de HU no aprobadas.
-- [ ] La trazabilidad Scrum y wikilinks cross-repo están actualizados.
+- [x] CA-01 a CA-03 tienen documentación revisable y evidencia de compatibilidad cuando exista implementación.
+- [x] No se fijan rutas/formats de HU no aprobadas.
+- [x] La trazabilidad Scrum y wikilinks cross-repo están actualizados.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Cumplido para HU-003 | `llm-wiki/wiki/contracts.md`, `citas-web/CATALOG-CONTRACT.md` | Representaciones y acceso documentados |
+| CA-02 | Cumplido para HU-003 | `CatalogController`, contrato frontend | Consumo directo REST/JSON |
+| CA-03 / DoD | Cumplido para HU-003 | diff cross-repo y `CatalogIntegrationTest` | Migración, pruebas y límites identificados |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Corte HU-003 aprobado y validado en ambos repositorios; el contrato de otras capacidades sigue abierto.
 ## Notas y decisiones
-- No hay contrato final aprobado a la fecha.
-- 2026-09-17: aprobado el contrato inicial de HU-005/006/007 documentado en `../../llm-wiki/wiki/contracts.md`. El resto de capacidades se añadirá cuando sus HU se aprueben. El impacto cross-repo está enumerado en esa página; no se edita `citas-web` en este incremento.
+- El contrato completo del producto aún no está cerrado; este incremento solo fija HU-003.
+- 2026-09-17: aprobado el contrato inicial de HU-005/006/007 documentado en `../../llm-wiki/wiki/contracts.md`.
+- 2026-09-24: aprobado el contrato de catálogos; el impacto cross-repo está enumerado en `contracts.md` y `citas-web/CATALOG-CONTRACT.md`.

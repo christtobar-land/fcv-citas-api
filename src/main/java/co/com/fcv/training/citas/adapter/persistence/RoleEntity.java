@@ -8,5 +8,6 @@ class RoleEntity {
     @Id Short id;
     @Column(nullable = false, length = 30) String code;
     @Column(nullable = false, length = 80) String name;
+    @Column(length = 255) String description;
     protected RoleEntity() {}
 }
