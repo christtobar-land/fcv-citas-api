@@ -63,6 +63,10 @@ class CatalogIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.code == 'HIC')].name").value("Hospital Internacional de Colombia (HIC)"))
                 .andExpect(jsonPath("$[?(@.code == 'ICV')].active").value(true));
+        mvc.perform(get("/api/v1/catalogs/insurance-plans"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.code == 'A-CONTRIB')].epsCode").value("EPS_DEMO_A"))
+                .andExpect(jsonPath("$[?(@.code == 'PARTICULAR')].regimeCode").value("PARTICULAR"));
     }
 
     @Test

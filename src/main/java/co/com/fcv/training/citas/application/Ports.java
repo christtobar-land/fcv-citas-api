@@ -19,6 +19,11 @@ public final class Ports {
         Account save(Account account);
     }
 
+    public interface Affiliations {
+        Optional<InsurancePlan> activePlan(Long planId);
+        void createInitial(Long userId, Long planId);
+    }
+
     public interface Sessions {
         void save(RefreshSession session);
         Optional<RefreshSession> lockByJtiHash(String hash);
@@ -50,6 +55,7 @@ public final class Ports {
         List<StatusCatalog> rescheduleStatuses();
         List<RegimeCatalog> insuranceRegimes();
         List<LocationCatalog> locations();
+        List<InsurancePlanCatalog> insurancePlans();
     }
 
     public record RoleCatalog(short id, String code, String name, String description) {}
@@ -57,4 +63,8 @@ public final class Ports {
     public record RegimeCatalog(short id, String code, String name) {}
     public record LocationCatalog(short id, String code, String name, String address,
                                   String city, String department, boolean active) {}
+    public record InsurancePlanCatalog(Long id, Long epsId, String epsCode, String epsName,
+                                      short regimeId, String regimeCode, String regimeName,
+                                      String code, String name) {}
+    public record InsurancePlan(Long id) {}
 }

@@ -29,9 +29,9 @@ class ApplicationConfig {
         };
     }
 
-    @Bean AuthService authService(Ports.Accounts accounts, Ports.Sessions sessions, Ports.Passwords passwords,
+    @Bean AuthService authService(Ports.Accounts accounts, Ports.Affiliations affiliations, Ports.Sessions sessions, Ports.Passwords passwords,
                                   Ports.Tokens tokens, Ports.Transactions transactions, Clock clock) {
-        return new AuthService(accounts, sessions, passwords, tokens, transactions, clock);
+        return new AuthService(accounts, affiliations, sessions, passwords, tokens, transactions, clock);
     }
 
     @Bean CatalogService catalogService(Ports.Catalogs catalogs) {

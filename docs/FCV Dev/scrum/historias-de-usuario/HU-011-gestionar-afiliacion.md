@@ -2,7 +2,7 @@
 id: HU-011
 tipo: historia-de-usuario
 titulo: "Gestionar afiliación"
-estado: Pendiente de aprobación
+estado: En desarrollo · afiliación inicial opcional implementada
 epica: "[[EP-002-identidad-y-perfil-del-usuario]]"
 esfuerzo: Medio
 sprint_sugerido: "Incremento 2"
@@ -29,7 +29,7 @@ EPS y planes son configurables; régimen es catálogo fijo.
 ## Esfuerzo
 **Nivel:** Medio. **Justificación de dificultad:** enlaza catálogos configurables/fijos, integridad y ownership.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir representación de afiliación.** Dificultad: Medio. Usar FKs/relaciones normalizadas.
+- [x] **T-01 — Definir representación de afiliación.** Dificultad: Medio. Usar FKs/relaciones normalizadas.
 - [ ] **T-02 — Validar consistencia EPS-plan-régimen.** Dificultad: Alto. Impedir combinaciones inválidas o repetidas.
 - [ ] **T-03 — Entregar flujo propio y pruebas.** Dificultad: Medio. Aplicar ownership y mostrar catálogos activos.
 ## Criterios de aceptación
@@ -46,10 +46,12 @@ EPS y planes son configurables; régimen es catálogo fijo.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
+| CA-01 | Parcial | `V3__insurance_catalogs_and_affiliations.sql`, `AuthIntegrationTest.registrationCanCreateOptionalAffiliationAndRejectUnavailablePlan` | Registro crea afiliación inicial mediante FK cuando se informa `insurancePlanId`; consulta/actualización propia sigue pendiente |
 | CA-02 | Pendiente | — | — |
 | CA-03 / DoD | Pendiente | — | — |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-24 — Se implementa el corte de afiliación inicial opcional del Goal S4: plan activo, FK y número de afiliación nulo. La gestión completa de la HU permanece abierta.
 ## Notas y decisiones
 - La regla de vigencia de una EPS/plan se abordará con sus HU administrativas.
+- La selección durante registro es opcional y no modifica reglas de disponibilidad/reserva. La consulta/edición de afiliación propia y la validación de duplicidad definida por esta HU quedan para el siguiente corte de identidad/perfil.

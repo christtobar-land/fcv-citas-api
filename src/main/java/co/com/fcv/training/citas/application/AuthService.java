@@ -12,19 +12,22 @@ import java.util.Set;
 
 public class AuthService {
     public record Registration(String firstName, String lastName, String documentType,
-                               String documentNumber, String email, String phone, String password) {}
+                               String documentNumber, String email, String phone, String password,
+                               Long insurancePlanId) {}
     public record Tokens(String accessToken, String refreshToken, long expiresIn) {}
 
     private final Ports.Accounts accounts;
+    private final Ports.Affiliations affiliations;
     private final Ports.Sessions sessions;
     private final Ports.Passwords passwords;
     private final Ports.Tokens tokens;
     private final Ports.Transactions transactions;
     private final Clock clock;
 
-    public AuthService(Ports.Accounts accounts, Ports.Sessions sessions, Ports.Passwords passwords,
+    public AuthService(Ports.Accounts accounts, Ports.Affiliations affiliations, Ports.Sessions sessions, Ports.Passwords passwords,
                        Ports.Tokens tokens, Ports.Transactions transactions, Clock clock) {
         this.accounts = accounts;
+        this.affiliations = affiliations;
         this.sessions = sessions;
         this.passwords = passwords;
         this.tokens = tokens;
@@ -41,10 +44,15 @@ public class AuthService {
             String password = input.password();
             if (password == null || password.isBlank()) throw new IllegalArgumentException("Contraseña obligatoria");
             if (password.getBytes(StandardCharsets.UTF_8).length > 72) throw new IllegalArgumentException("Contraseña demasiado larga");
+            if (input.insurancePlanId() != null && affiliations.activePlan(input.insurancePlanId()).isEmpty()) {
+                throw new IllegalArgumentException("El plan seleccionado no está disponible");
+            }
             Account account = new Account(null, Identity.required(input.firstName()),
                     Identity.required(input.lastName()), type, number, email,
                     Identity.required(input.phone()), passwords.hash(password), Set.of("USER"));
-            return accounts.save(account);
+            Account saved = accounts.save(account);
+            if (input.insurancePlanId() != null) affiliations.createInitial(saved.id(), input.insurancePlanId());
+            return saved;
         });
     }
 

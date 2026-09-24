@@ -6,6 +6,7 @@ import co.com.fcv.training.citas.domain.Account;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,8 @@ class AuthController {
                            @NotBlank @Size(max = 80) String documentNumber,
                            @NotBlank @Size(max = 254) String email,
                            @NotBlank @Size(max = 40) String phone,
-                           @NotBlank String password) {}
+                           @NotBlank String password,
+                           @Positive Long insurancePlanId) {}
     record RegisterResponse(Long id, String firstName, String lastName, String documentType,
                             String documentNumber, String email, String phone, String role) {}
     record LoginRequest(@NotBlank String email, @NotBlank String password) {}
@@ -46,7 +48,7 @@ class AuthController {
     @PostMapping("/register")
     ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         Account account = auth.register(new AuthService.Registration(request.firstName(), request.lastName(),
-                request.documentType(), request.documentNumber(), request.email(), request.phone(), request.password()));
+                request.documentType(), request.documentNumber(), request.email(), request.phone(), request.password(), request.insurancePlanId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(new RegisterResponse(account.id(), account.firstName(),
                 account.lastName(), account.documentType(), account.documentNumber(), account.email(), account.phone(), "USER"));
     }

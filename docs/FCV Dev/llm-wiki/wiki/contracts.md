@@ -35,6 +35,18 @@ Se aprueba el primer corte de catálogos fijos de solo lectura, consumible direc
 
 Las cinco rutas requieren autenticación. No se publican operaciones de escritura; un `POST` autenticado sobre un catálogo responde `405`. Los valores se precargan mediante `V2__fixed_catalogs.sql`, incluyendo `HIC` e `ICV` con referencias públicas permitidas. La URL base del frontend queda documentada en `citas-web/CATALOG-CONTRACT.md`; la integración visual se reserva para HU-033 y las HU de agenda.
 
+## DECISIÓN — 2026-09-24 · Afiliación inicial opcional
+
+Para que un visitante pueda elegir cobertura durante el registro, el catálogo de planes activos es público y de solo lectura:
+
+| Operación | Éxito | Acceso | Representación |
+|---|---|---|---|
+| `GET /api/v1/catalogs/insurance-plans` | `200` | Público | `{ id, epsId, epsCode, epsName, regimeId, regimeCode, regimeName, code, name }[]` |
+
+La respuesta solo incluye planes cuyo plan y EPS están activos. `POST`, `PUT`, `PATCH` y `DELETE` no forman parte del contrato.
+
+`POST /api/v1/auth/register` acepta el campo opcional `insurancePlanId` (entero positivo). Si se omite, no se crea afiliación. Si se informa, el plan debe existir y estar activo; de lo contrario responde `400` en Problem Details y no se crea el usuario. Una selección válida crea una fila en `user_insurance_affiliations` mediante FK, sin duplicar nombres de EPS, régimen o plan en `users`. La afiliación inicial deja `membership_number` nulo; el diligenciamiento posterior pertenece a HU-011 completa.
+
 ### Impacto cross-repo antes del cambio REST
 
 - `citas-api`: nuevo `pom.xml`, código de dominio/aplicación/adaptadores, migración Flyway, configuración, pruebas y este contrato.
@@ -46,6 +58,7 @@ Las cinco rutas requieren autenticación. No se publican operaciones de escritur
 - `citas-api`: migración Flyway V2, adaptadores JPA, servicio/controlador REST y `CatalogIntegrationTest`.
 - `citas-web`: `CATALOG-CONTRACT.md` registra rutas, representaciones, autenticación y límites de integración.
 - Validación: `CatalogIntegrationTest` 2/2 y suite Maven 11/11 sin fallos.
+- Validación adicional: registro sin plan, registro con plan activo, plan inexistente rechazado; frontend carga de catálogo y selección opcional cubiertos por Vitest.
 
 ## PREGUNTA ABIERTA
 

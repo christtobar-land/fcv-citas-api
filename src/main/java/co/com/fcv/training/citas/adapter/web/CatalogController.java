@@ -18,4 +18,5 @@ class CatalogController {
     @GetMapping("/reschedule-statuses") List<Ports.StatusCatalog> rescheduleStatuses() { return catalogs.rescheduleStatuses(); }
     @GetMapping("/insurance-regimes") List<Ports.RegimeCatalog> insuranceRegimes() { return catalogs.insuranceRegimes(); }
     @GetMapping("/locations") List<Ports.LocationCatalog> locations() { return catalogs.locations(); }
+    @GetMapping("/insurance-plans") List<Ports.InsurancePlanCatalog> insurancePlans() { return catalogs.insurancePlans(); }
 }

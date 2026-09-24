@@ -12,15 +12,17 @@ class CatalogJpaAdapter implements Ports.Catalogs {
     private final RescheduleStatusesJpa rescheduleStatuses;
     private final InsuranceRegimesJpa insuranceRegimes;
     private final LocationsJpa locations;
+    private final EpsPlansJpa insurancePlans;
 
     CatalogJpaAdapter(RolesJpa roles, AppointmentStatusesJpa appointmentStatuses,
                       RescheduleStatusesJpa rescheduleStatuses, InsuranceRegimesJpa insuranceRegimes,
-                      LocationsJpa locations) {
+                      LocationsJpa locations, EpsPlansJpa insurancePlans) {
         this.roles = roles;
         this.appointmentStatuses = appointmentStatuses;
         this.rescheduleStatuses = rescheduleStatuses;
         this.insuranceRegimes = insuranceRegimes;
         this.locations = locations;
+        this.insurancePlans = insurancePlans;
     }
 
     @Override @Transactional(readOnly = true)
@@ -46,5 +48,12 @@ class CatalogJpaAdapter implements Ports.Catalogs {
     @Override @Transactional(readOnly = true)
     public List<Ports.LocationCatalog> locations() {
         return locations.findAll().stream().map(e -> new Ports.LocationCatalog(e.id, e.code, e.name, e.address, e.city, e.department, e.active)).toList();
+    }
+
+    @Override @Transactional(readOnly = true)
+    public List<Ports.InsurancePlanCatalog> insurancePlans() {
+        return insurancePlans.findAllActive().stream().map(e -> new Ports.InsurancePlanCatalog(
+                e.id, e.eps.id, e.eps.code, e.eps.name, e.regime.id, e.regime.code, e.regime.name,
+                e.code, e.name)).toList();
     }
 }

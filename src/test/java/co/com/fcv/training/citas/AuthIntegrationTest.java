@@ -85,6 +85,7 @@ class AuthIntegrationTest {
         String hash = jdbc.queryForObject("select password_hash from users where email = ?", String.class, email);
         assertThat(hash).startsWith("$2").isNotEqualTo("SyntheticPass123!");
         assertThat(jdbc.queryForObject("select count(*) from user_roles ur join roles r on ur.role_id=r.id where r.code='USER'", Integer.class)).isGreaterThan(0);
+        assertThat(jdbc.queryForObject("select count(*) from user_insurance_affiliations a join users u on a.user_id=u.id where u.email = ?", Integer.class, email)).isZero();
 
         mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON)
                 .content(registration(email, uniqueDoc()))).andExpect(status().isConflict());
@@ -102,6 +103,22 @@ class AuthIntegrationTest {
                 .content(registration(uniqueEmail(), uniqueDoc()).replace("SyntheticPass123!", "x".repeat(73))))
                 .andExpect(status().isBadRequest());
         assertThat(jdbc.queryForObject("select count(*) from users where email = ?", Integer.class, email)).isEqualTo(1);
+    }
+
+    @Test void registrationCanCreateOptionalAffiliationAndRejectUnavailablePlan() throws Exception {
+        String email = uniqueEmail();
+        String doc = uniqueDoc();
+        String withPlan = registration(email, doc).replace("\"password\":\"SyntheticPass123!\"", "\"password\":\"SyntheticPass123!\",\"insurancePlanId\":1");
+        mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(withPlan))
+                .andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("select count(*) from user_insurance_affiliations a join users u on a.user_id=u.id where u.email = ? and a.plan_id = 1", Integer.class, email)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select membership_number from user_insurance_affiliations a join users u on a.user_id=u.id where u.email = ?", String.class, email)).isNull();
+
+        String invalidEmail = uniqueEmail();
+        String invalid = registration(invalidEmail, uniqueDoc()).replace("\"password\":\"SyntheticPass123!\"", "\"password\":\"SyntheticPass123!\",\"insurancePlanId\":9999");
+        mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(invalid))
+                .andExpect(status().isBadRequest());
+        assertThat(jdbc.queryForObject("select count(*) from users where email = ?", Integer.class, invalidEmail)).isZero();
     }
 
     @Test void loginRefreshLogoutAndRoles() throws Exception {

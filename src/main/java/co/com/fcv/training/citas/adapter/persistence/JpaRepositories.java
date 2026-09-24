@@ -27,3 +27,16 @@ interface AppointmentStatusesJpa extends JpaRepository<AppointmentStatusEntity, 
 interface RescheduleStatusesJpa extends JpaRepository<RescheduleStatusEntity, Short> {}
 interface InsuranceRegimesJpa extends JpaRepository<InsuranceRegimeEntity, Short> {}
 interface LocationsJpa extends JpaRepository<LocationEntity, Short> {}
+interface EpsJpa extends JpaRepository<EpsEntity, Long> {}
+
+interface EpsPlansJpa extends JpaRepository<EpsPlanEntity, Long> {
+    @Query("select p from EpsPlanEntity p join fetch p.eps e join fetch p.regime r where p.active = true and e.active = true order by p.id")
+    java.util.List<EpsPlanEntity> findAllActive();
+
+    @Query("select p from EpsPlanEntity p join fetch p.eps e join fetch p.regime r where p.id = :id and p.active = true and e.active = true")
+    Optional<EpsPlanEntity> findActiveById(@Param("id") Long id);
+}
+
+interface AffiliationsJpa extends JpaRepository<UserInsuranceAffiliationEntity, Long> {
+    boolean existsByUser_IdAndCurrentTrue(Long userId);
+}
