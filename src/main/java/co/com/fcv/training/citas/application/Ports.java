@@ -113,7 +113,8 @@ public final class Ports {
                                      boolean general, String professionalName, String locationName, String specialtyName) {}
     public record AppointmentView(Long id, Long patientUserId, Long professionalId, short locationId,
                                   short specialtyId, String status, LocalDateTime startAt, LocalDateTime endAt,
-                                  String reason, String locationName, String specialtyName, String professionalName) {}
+                                  String reason, String locationName, String specialtyName, String professionalName,
+                                  String patientName) {}
     public record AppointmentHistoryView(Long appointmentId, String status, Long actorUserId, String source,
                                          String reason, java.time.Instant changedAt) {}
 }

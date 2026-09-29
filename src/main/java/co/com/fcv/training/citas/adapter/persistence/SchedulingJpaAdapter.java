@@ -293,9 +293,11 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
         SpecialtyEntity specialty = specialties.findById(a.specialtyId).orElseThrow();
         ProfessionalEntity professional = professionals.findById(a.professionalId).orElseThrow();
         UserEntity professionalUser = users.findById(professional.userId).orElseThrow();
+        UserEntity patientUser = users.findById(a.patientUserId).orElseThrow();
         return new Ports.AppointmentView(a.id, a.patientUserId, a.professionalId, a.locationId, a.specialtyId,
                 status, a.scheduledStartAt, a.scheduledEndAt, a.reason, location.name, specialty.name,
-                professionalUser.firstName + " " + professionalUser.lastName);
+                professionalUser.firstName + " " + professionalUser.lastName,
+                patientUser.firstName + " " + patientUser.lastName);
     }
     private Ports.AppointmentView appointmentView(AppointmentEntity a) { return appointmentView(a, statusById(a.statusId).code); }
     private String normalizedReason(String reason) { return reason == null || reason.isBlank() ? null : reason.trim(); }
