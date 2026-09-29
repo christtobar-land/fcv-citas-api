@@ -89,9 +89,15 @@ interface AppointmentsJpa extends JpaRepository<AppointmentEntity, Long> {
     @Query("select a from AppointmentEntity a where a.id = :id")
     Optional<AppointmentEntity> lockById(@Param("id") Long id);
     java.util.List<AppointmentEntity> findByStatusIdOrderByScheduledStartAt(Short statusId);
+    @Query("select a from AppointmentEntity a where a.patientUserId=:userId and (:statusId is null or a.statusId=:statusId) and (:date is null or function('date', a.scheduledStartAt)=:date) order by a.scheduledStartAt desc")
+    java.util.List<AppointmentEntity> patientAppointments(@Param("userId") Long userId, @Param("statusId") Short statusId, @Param("date") java.time.LocalDate date);
+    @Query("select a from AppointmentEntity a where a.professionalId=:professionalId and a.statusId=:statusId and (:date is null or function('date', a.scheduledStartAt)=:date) and (:locationId is null or a.locationId=:locationId) order by a.scheduledStartAt")
+    java.util.List<AppointmentEntity> professionalAgenda(@Param("professionalId") Long professionalId, @Param("statusId") Short statusId, @Param("date") java.time.LocalDate date, @Param("locationId") Short locationId);
 }
 
-interface AppointmentHistoriesJpa extends JpaRepository<AppointmentHistoryEntity, Long> {}
+interface AppointmentHistoriesJpa extends JpaRepository<AppointmentHistoryEntity, Long> {
+    java.util.List<AppointmentHistoryEntity> findByAppointmentIdOrderByChangedAt(Long appointmentId);
+}
 
 interface ProfessionalSpecialtiesJpa extends JpaRepository<ProfessionalSpecialtyEntity, ProfessionalSpecialtyKey> {
     @org.springframework.data.jpa.repository.Modifying

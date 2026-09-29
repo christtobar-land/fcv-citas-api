@@ -52,6 +52,11 @@ public final class Ports {
                                 LocalDateTime startAt, String reason);
         List<AppointmentView> requestedAppointments();
         AppointmentView decide(Long adminUserId, Long appointmentId, String decision, String reason);
+        List<AppointmentView> patientAppointments(Long patientUserId, String status, LocalDate date);
+        AppointmentView cancel(Long patientUserId, Long appointmentId);
+        List<AppointmentView> professionalAppointments(Long professionalUserId, LocalDate date, Short locationId);
+        AppointmentView close(Long professionalUserId, Long appointmentId, String outcome);
+        List<AppointmentHistoryView> history(Long actorUserId, java.util.Set<String> roles, Long appointmentId);
     }
 
     public interface Sessions {
@@ -108,5 +113,7 @@ public final class Ports {
                                      boolean general) {}
     public record AppointmentView(Long id, Long patientUserId, Long professionalId, short locationId,
                                   short specialtyId, String status, LocalDateTime startAt, LocalDateTime endAt,
-                                  String reason) {}
+                                  String reason, String locationName, String specialtyName, String professionalName) {}
+    public record AppointmentHistoryView(Long appointmentId, String status, Long actorUserId, String source,
+                                         String reason, java.time.Instant changedAt) {}
 }

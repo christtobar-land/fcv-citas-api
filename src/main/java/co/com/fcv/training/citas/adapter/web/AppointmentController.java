@@ -12,6 +12,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/appointments")
@@ -26,5 +29,22 @@ class AppointmentController {
         Ports.AppointmentView result = scheduling.reserve(Long.valueOf(jwt.getSubject()), new SchedulingService.Reservation(
                 request.professionalId(), request.locationId(), request.specialtyId(), request.startAt(), request.reason()));
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('USER')")
+    List<Ports.AppointmentView> mine(@AuthenticationPrincipal Jwt jwt, @RequestParam(required = false) String status,
+                                     @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date) {
+        return scheduling.mine(Long.valueOf(jwt.getSubject()), status, date);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('USER')")
+    Ports.AppointmentView cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) { return scheduling.cancel(Long.valueOf(jwt.getSubject()), id); }
+
+    @GetMapping("/{id}/history")
+    List<Ports.AppointmentHistoryView> history(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        List<String> roles = jwt.getClaimAsStringList("roles");
+        return scheduling.history(Long.valueOf(jwt.getSubject()), roles == null ? Set.of() : Set.copyOf(roles), id);
     }
 }

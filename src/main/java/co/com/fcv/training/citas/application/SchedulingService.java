@@ -32,4 +32,9 @@ public class SchedulingService {
     public Ports.AppointmentView decide(Long adminUserId, Long id, String decision, String reason) {
         return scheduling.decide(adminUserId, id, decision, reason);
     }
+    public List<Ports.AppointmentView> mine(Long userId, String status, LocalDate date) { return scheduling.patientAppointments(userId, status, date); }
+    public Ports.AppointmentView cancel(Long userId, Long id) { return scheduling.cancel(userId, id); }
+    public List<Ports.AppointmentView> professionalAgenda(Long userId, LocalDate date, Short locationId) { return scheduling.professionalAppointments(userId, date, locationId); }
+    public Ports.AppointmentView close(Long userId, Long id, String outcome) { return scheduling.close(userId, id, outcome); }
+    public List<Ports.AppointmentHistoryView> history(Long userId, java.util.Set<String> roles, Long id) { return scheduling.history(userId, roles, id); }
 }

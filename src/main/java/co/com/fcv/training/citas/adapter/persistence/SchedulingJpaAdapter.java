@@ -30,16 +30,17 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     private final AppointmentStatusesJpa statuses;
     private final AppointmentHistoriesJpa history;
     private final AffiliationsJpa affiliations;
+    private final UsersJpa users;
     private final Clock clock;
 
     SchedulingJpaAdapter(ProfessionalsJpa professionals, ProfessionalLocationsJpa professionalLocations,
                          SpecialtiesJpa specialties, LocationsJpa locations, AvailabilityBlocksJpa blocks,
                          ProfessionalSlotsJpa slots, AppointmentsJpa appointments, AppointmentStatusesJpa statuses,
-                         AppointmentHistoriesJpa history, AffiliationsJpa affiliations, Clock clock) {
+                         AppointmentHistoriesJpa history, AffiliationsJpa affiliations, UsersJpa users, Clock clock) {
         this.professionals = professionals; this.professionalLocations = professionalLocations;
         this.specialties = specialties; this.locations = locations; this.blocks = blocks; this.slots = slots;
         this.appointments = appointments; this.statuses = statuses; this.history = history;
-        this.affiliations = affiliations; this.clock = clock;
+        this.affiliations = affiliations; this.users = users; this.clock = clock;
     }
 
     @Override @Transactional
@@ -178,6 +179,49 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
         return appointmentView(appointment, next);
     }
 
+    @Override @Transactional(readOnly = true)
+    public List<Ports.AppointmentView> patientAppointments(Long patientUserId, String statusCode, LocalDate date) {
+        Short statusId = statusCode == null || statusCode.isBlank() ? null : status(statusCode).id;
+        return appointments.patientAppointments(patientUserId, statusId, date).stream().map(this::appointmentView).toList();
+    }
+
+    @Override @Transactional
+    public Ports.AppointmentView cancel(Long patientUserId, Long appointmentId) {
+        AppointmentEntity appointment = appointments.lockById(appointmentId).orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
+        if (!Objects.equals(appointment.patientUserId, patientUserId) || !appointment.scheduledStartAt.isAfter(LocalDateTime.now(clock))) throw new SchedulingConflict("La cita no puede cancelarse");
+        if (statusById(appointment.statusId).terminal) throw new SchedulingConflict("La cita no puede cancelarse");
+        AppointmentStatusEntity cancelled = status("CANCELLED"); appointment.statusId = cancelled.id; appointments.saveAndFlush(appointment);
+        List<ProfessionalSlotEntity> reserved = slots.findByAppointmentId(appointment.id); reserved.forEach(slot -> slot.appointmentId = null); slots.saveAllAndFlush(reserved);
+        addHistory(appointment.id, cancelled.id, patientUserId, "USER", null); return appointmentView(appointment, "CANCELLED");
+    }
+
+    @Override @Transactional(readOnly = true)
+    public List<Ports.AppointmentView> professionalAppointments(Long professionalUserId, LocalDate date, Short locationId) {
+        ProfessionalEntity professional = ownProfessional(professionalUserId);
+        return appointments.professionalAgenda(professional.id, status("APPROVED").id, date, locationId).stream().map(this::appointmentView).toList();
+    }
+
+    @Override @Transactional
+    public Ports.AppointmentView close(Long professionalUserId, Long appointmentId, String outcome) {
+        if (!"COMPLETED".equals(outcome) && !"NO_SHOW".equals(outcome)) throw new IllegalArgumentException("Resultado inválido");
+        ProfessionalEntity professional = ownProfessional(professionalUserId);
+        AppointmentEntity appointment = appointments.lockById(appointmentId).orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
+        if (!Objects.equals(appointment.professionalId, professional.id) || appointment.statusId.shortValue() != status("APPROVED").id.shortValue()
+                || appointment.scheduledEndAt.isAfter(LocalDateTime.now(clock))) throw new SchedulingConflict("La cita no es aplicable para cierre");
+        AppointmentStatusEntity target = status(outcome); appointment.statusId = target.id; appointments.saveAndFlush(appointment);
+        addHistory(appointment.id, target.id, professionalUserId, "USER", null); return appointmentView(appointment, outcome);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public List<Ports.AppointmentHistoryView> history(Long actorUserId, java.util.Set<String> roles, Long appointmentId) {
+        AppointmentEntity appointment = appointments.findById(appointmentId).orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
+        boolean admin = roles.contains("ADMIN"); boolean patient = Objects.equals(appointment.patientUserId, actorUserId);
+        boolean professional = professionals.findByUserId(actorUserId).map(p -> Objects.equals(p.id, appointment.professionalId)).orElse(false);
+        if (!admin && !patient && !professional) throw new SchedulingConflict("No puede consultar esta auditoría");
+        return history.findByAppointmentIdOrderByChangedAt(appointmentId).stream().map(item -> new Ports.AppointmentHistoryView(item.appointmentId,
+                statusById(item.statusId).code, item.changedByUserId, item.changeSource, item.reason, item.changedAt)).toList();
+    }
+
     private ProfessionalEntity ownProfessional(Long userId) {
         return professionals.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("Profesional no encontrado"));
     }
@@ -220,6 +264,7 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     private AppointmentStatusEntity status(String code) {
         return statuses.findByCode(code).orElseThrow(() -> new IllegalStateException("Estado faltante: " + code));
     }
+    private AppointmentStatusEntity statusById(Short id) { return statuses.findById(id).orElseThrow(() -> new IllegalStateException("Estado faltante")); }
     private void createSlots(AvailabilityBlockEntity block) {
         List<ProfessionalSlotEntity> generated = new ArrayList<>();
         LocalDateTime current = LocalDateTime.of(block.availableDate, block.startTime);
@@ -238,8 +283,14 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
         return new Ports.AvailabilityBlockView(b.id, b.professionalId, b.locationId, b.availableDate, b.startTime, b.endTime);
     }
     private Ports.AppointmentView appointmentView(AppointmentEntity a, String status) {
+        LocationEntity location = locations.findById(a.locationId).orElseThrow();
+        SpecialtyEntity specialty = specialties.findById(a.specialtyId).orElseThrow();
+        ProfessionalEntity professional = professionals.findById(a.professionalId).orElseThrow();
+        UserEntity professionalUser = users.findById(professional.userId).orElseThrow();
         return new Ports.AppointmentView(a.id, a.patientUserId, a.professionalId, a.locationId, a.specialtyId,
-                status, a.scheduledStartAt, a.scheduledEndAt, a.reason);
+                status, a.scheduledStartAt, a.scheduledEndAt, a.reason, location.name, specialty.name,
+                professionalUser.firstName + " " + professionalUser.lastName);
     }
+    private Ports.AppointmentView appointmentView(AppointmentEntity a) { return appointmentView(a, statusById(a.statusId).code); }
     private String normalizedReason(String reason) { return reason == null || reason.isBlank() ? null : reason.trim(); }
 }

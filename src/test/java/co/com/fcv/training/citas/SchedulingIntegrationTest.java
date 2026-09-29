@@ -123,6 +123,51 @@ class SchedulingIntegrationTest {
                 fixture.professionalId(), java.sql.Timestamp.valueOf(date.atTime(8, 0)))).isEqualTo(1);
     }
 
+    @Test
+    void patientCanListCancelAndAuditOwnFutureAppointment() throws Exception {
+        Fixture fixture = fixture(1);
+        LocalDate date = LocalDate.now().plusDays(7);
+        publish(fixture, date, "08:00:00", "09:00:00");
+        long appointment = reserve(fixture, date, "08:00:00");
+
+        mvc.perform(get("/api/v1/appointments").header("Authorization", bearer(fixture.patientUserId(), "USER"))
+                        .param("date", date.toString()).param("status", "APPROVED"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(appointment));
+        mvc.perform(post("/api/v1/appointments/" + appointment + "/cancel")
+                        .header("Authorization", bearer(fixture.patientUserId(), "USER")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        assertThat(jdbc.queryForObject("select count(*) from professional_slots where appointment_id=?", Integer.class, appointment)).isZero();
+        mvc.perform(get("/api/v1/appointments/" + appointment + "/history")
+                        .header("Authorization", bearer(fixture.patientUserId(), "USER")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[1].status").value("CANCELLED"))
+                .andExpect(jsonPath("$[1].source").value("USER"));
+        mvc.perform(post("/api/v1/appointments/" + appointment + "/cancel")
+                        .header("Authorization", bearer(fixture.patientUserId(), "USER")))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void professionalCanViewAndClosePastApprovedAppointmentAsAuthenticatedUser() throws Exception {
+        Fixture fixture = fixture(1);
+        LocalDate date = LocalDate.now().minusDays(2);
+        short approved = jdbc.queryForObject("select id from appointment_statuses where code='APPROVED'", Short.class);
+        jdbc.update("insert into appointments (patient_user_id,professional_id,location_id,specialty_id,status_id,scheduled_start_at,scheduled_end_at,created_by_user_id) values (?,?,?,?,?,?,?,?)",
+                fixture.patientUserId(), fixture.professionalId(), 1, 1, approved, java.sql.Timestamp.valueOf(date.atTime(8, 0)),
+                java.sql.Timestamp.valueOf(date.atTime(8, 30)), fixture.patientUserId());
+        long appointment = jdbc.queryForObject("select max(id) from appointments where patient_user_id=?", Long.class, fixture.patientUserId());
+
+        mvc.perform(get("/api/v1/professional/appointments").header("Authorization", bearer(fixture.professionalUserId(), "PROFESSIONAL"))
+                        .param("date", date.toString()).param("locationId", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(appointment));
+        mvc.perform(post("/api/v1/professional/appointments/" + appointment + "/close")
+                        .header("Authorization", bearer(fixture.professionalUserId(), "PROFESSIONAL"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"outcome\":\"COMPLETED\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("COMPLETED"));
+        assertThat(jdbc.queryForObject("select change_source from appointment_status_history where appointment_id=? order by id desc limit 1", String.class, appointment)).isEqualTo("USER");
+        assertThat(jdbc.queryForObject("select changed_by_user_id from appointment_status_history where appointment_id=? order by id desc limit 1", Long.class, appointment))
+                .isEqualTo(fixture.professionalUserId());
+    }
+
     private String reserveConcurrently(long patientId, Fixture fixture, LocalDate date, CountDownLatch ready, CountDownLatch start) throws Exception {
         ready.countDown(); start.await();
         try {
@@ -137,6 +182,14 @@ class SchedulingIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"locationId\":1,\"date\":\"%s\",\"startTime\":\"%s\",\"endTime\":\"%s\"}".formatted(date, start, end)))
                 .andExpect(status().isCreated());
+    }
+
+    private long reserve(Fixture fixture, LocalDate date, String time) throws Exception {
+        String response = mvc.perform(post("/api/v1/appointments").header("Authorization", bearer(fixture.patientUserId(), "USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"professionalId\":%d,\"locationId\":1,\"specialtyId\":1,\"startAt\":\"%sT%s\"}".formatted(fixture.professionalId(), date, time)))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        return new com.fasterxml.jackson.databind.ObjectMapper().readTree(response).get("id").asLong();
     }
 
     private Fixture fixture(int specialtyId) {

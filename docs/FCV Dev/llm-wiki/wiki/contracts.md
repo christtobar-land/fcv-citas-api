@@ -99,6 +99,20 @@ La migración V5 mantiene 3FN: bloques, slots, citas e historial son entidades s
 - Validación: `OfferIntegrationTest` 2/2; regresión `AuthIntegrationTest` 6/6 y `CatalogIntegrationTest` 2/2; frontend 13/13, lint y build PASS.
 - Pendiente explícito: CA-02 de HU-014, CA-03 de HU-016 y CA-03 de HU-017 requieren implementar disponibilidad/reserva para probar el efecto de la oferta.
 
+## DECISIÓN — 2026-09-29 · Ciclo de vida básico de cita (HU-025, HU-026, HU-029, HU-030 y HU-032)
+
+El corte amplía la consulta y operación de citas ya reservadas. Las rutas requieren access JWT y verifican ownership dentro del caso de uso; un identificador ajeno no revela su auditoría ni permite una transición.
+
+| Operación | Acceso | Éxito | Regla relevante |
+|---|---|---|---|
+| `GET /api/v1/appointments?status=&date=` | USER | `200` | Devuelve solo citas propias; cada elemento incluye sede, especialidad, profesional, horarios, estado y motivo cuando exista. |
+| `POST /api/v1/appointments/{id}/cancel` | USER dueño | `200` | Solo cita futura no terminal; cambia a `CANCELLED`, libera slots y agrega historial `USER`. |
+| `GET /api/v1/appointments/{id}/history` | USER dueño, PROFESSIONAL asignado o ADMIN | `200` | Historial de estados sin información clínica. |
+| `GET /api/v1/professional/appointments?date=&locationId=` | PROFESSIONAL | `200` | Solo agenda propia en estado `APPROVED`. |
+| `POST /api/v1/professional/appointments/{id}/close` | PROFESSIONAL asignado | `200` | Solo tras terminar; acepta `COMPLETED` o `NO_SHOW`, y registra como actor al usuario profesional con fuente `USER`. |
+
+La fuente `USER` del cierre es una decisión explícitamente aprobada: el profesional actúa como un usuario autenticado y el historial conserva su identificador. Reprogramación y recuperación de contraseña siguen fuera de este corte.
+
 ## PREGUNTA ABIERTA
 
 Paginación, perfil completo, cancelación, reprogramación, agenda de citas, cierre y automatizaciones continúan sin contrato final.
