@@ -147,6 +147,30 @@ class SchedulingIntegrationTest {
     }
 
     @Test
+    void patientReschedulesAnApprovedAppointmentImmediatelyAndReleasesThePreviousSlot() throws Exception {
+        Fixture fixture = fixture(1);
+        LocalDate date = LocalDate.now().plusDays(8);
+        publish(fixture, date, "08:00:00", "10:00:00");
+        long appointment = reserve(fixture, date, "08:00:00");
+
+        mvc.perform(post("/api/v1/appointments/" + appointment + "/reschedules")
+                        .header("Authorization", bearer(fixture.patientUserId(), "USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"locationId\":1,\"startAt\":\"%sT09:00:00\"}".formatted(date)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(appointment))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.startAt").value(date + "T09:00:00"));
+
+        assertThat(jdbc.queryForObject("select count(*) from professional_slots where appointment_id=? and start_at=?", Integer.class,
+                appointment, java.sql.Timestamp.valueOf(date.atTime(8, 0)))).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from professional_slots where appointment_id=? and start_at=?", Integer.class,
+                appointment, java.sql.Timestamp.valueOf(date.atTime(9, 0)))).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select reason from appointment_status_history where appointment_id=? order by id desc limit 1", String.class, appointment))
+                .isEqualTo("Reprogramación confirmada");
+    }
+
+    @Test
     void professionalCanViewAndClosePastApprovedAppointmentAsAuthenticatedUser() throws Exception {
         Fixture fixture = fixture(1);
         LocalDate date = LocalDate.now().minusDays(2);

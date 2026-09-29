@@ -57,10 +57,7 @@ public final class Ports {
         List<AppointmentView> professionalAppointments(Long professionalUserId, LocalDate date, Short locationId);
         AppointmentView close(Long professionalUserId, Long appointmentId, String outcome);
         List<AppointmentHistoryView> history(Long actorUserId, java.util.Set<String> roles, Long appointmentId);
-        RescheduleView requestReschedule(Long patientUserId, Long appointmentId, Short locationId, LocalDateTime startAt);
-        List<RescheduleView> patientReschedules(Long patientUserId);
-        List<RescheduleView> pendingReschedules();
-        RescheduleView decideReschedule(Long adminUserId, Long requestId, String decision, String reason);
+        AppointmentView reschedule(Long patientUserId, Long appointmentId, Short locationId, LocalDateTime startAt);
     }
 
     public interface Sessions {
@@ -121,7 +118,4 @@ public final class Ports {
                                   String patientName) {}
     public record AppointmentHistoryView(Long appointmentId, String status, Long actorUserId, String source,
                                          String reason, java.time.Instant changedAt) {}
-    public record RescheduleView(Long id, Long appointmentId, String status, LocalDateTime requestedStartAt,
-                                 LocalDateTime requestedEndAt, String locationName, String specialtyName,
-                                 String professionalName, String decisionReason) {}
 }

@@ -37,8 +37,7 @@ public class SchedulingService {
     public List<Ports.AppointmentView> professionalAgenda(Long userId, LocalDate date, Short locationId) { return scheduling.professionalAppointments(userId, date, locationId); }
     public Ports.AppointmentView close(Long userId, Long id, String outcome) { return scheduling.close(userId, id, outcome); }
     public List<Ports.AppointmentHistoryView> history(Long userId, java.util.Set<String> roles, Long id) { return scheduling.history(userId, roles, id); }
-    public Ports.RescheduleView requestReschedule(Long userId, Long appointmentId, Short locationId, LocalDateTime startAt) { return scheduling.requestReschedule(userId, appointmentId, locationId, startAt); }
-    public List<Ports.RescheduleView> myReschedules(Long userId) { return scheduling.patientReschedules(userId); }
-    public List<Ports.RescheduleView> pendingReschedules() { return scheduling.pendingReschedules(); }
-    public Ports.RescheduleView decideReschedule(Long userId, Long id, String decision, String reason) { return scheduling.decideReschedule(userId, id, decision, reason); }
+    public Ports.AppointmentView reschedule(Long userId, Long appointmentId, Short locationId, LocalDateTime startAt) {
+        return scheduling.reschedule(userId, appointmentId, locationId, startAt);
+    }
 }
