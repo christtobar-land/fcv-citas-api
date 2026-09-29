@@ -110,7 +110,7 @@ public final class Ports {
                                         LocalTime startTime, LocalTime endTime) {}
     public record AvailabilityOption(Long professionalId, short locationId, short specialtyId,
                                      LocalDateTime startAt, LocalDateTime endAt, short durationMinutes,
-                                     boolean general) {}
+                                     boolean general, String professionalName, String locationName, String specialtyName) {}
     public record AppointmentView(Long id, Long patientUserId, Long professionalId, short locationId,
                                   short specialtyId, String status, LocalDateTime startAt, LocalDateTime endAt,
                                   String reason, String locationName, String specialtyName, String professionalName) {}

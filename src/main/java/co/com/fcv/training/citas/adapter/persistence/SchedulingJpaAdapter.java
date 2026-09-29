@@ -108,9 +108,15 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
                         consecutive = false; break;
                     }
                 }
-                if (consecutive) result.add(new Ports.AvailabilityOption(entry.getKey(), locationId, specialtyId,
-                        first.startAt, first.startAt.plusMinutes(specialty.appointmentDurationMinutes),
-                        specialty.appointmentDurationMinutes, specialty.general));
+                if (consecutive) {
+                    ProfessionalEntity professional = professionals.findById(entry.getKey()).orElseThrow();
+                    UserEntity professionalUser = users.findById(professional.userId).orElseThrow();
+                    LocationEntity location = locations.findById(locationId).orElseThrow();
+                    result.add(new Ports.AvailabilityOption(entry.getKey(), locationId, specialtyId,
+                            first.startAt, first.startAt.plusMinutes(specialty.appointmentDurationMinutes),
+                            specialty.appointmentDurationMinutes, specialty.general,
+                            professionalUser.firstName + " " + professionalUser.lastName, location.name, specialty.name));
+                }
             }
         }
         return result;
