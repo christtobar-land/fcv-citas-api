@@ -75,13 +75,24 @@ interface ProfessionalSlotsJpa extends JpaRepository<ProfessionalSlotEntity, Lon
     java.util.List<ProfessionalSlotEntity> lockForReservation(@Param("professionalId") Long professionalId,
                                                               @Param("locationId") Short locationId,
                                                               @Param("starts") java.util.List<java.time.LocalDateTime> starts);
-    @Query("select s from ProfessionalSlotEntity s join fetch s.block b where b.professionalId in :professionalIds and b.locationId = :locationId and b.availableDate = :date and b.active = true and s.appointmentId is null order by b.professionalId, s.startAt")
+    @Query("select s from ProfessionalSlotEntity s join fetch s.block b where b.professionalId in :professionalIds and b.locationId = :locationId and b.availableDate = :date and b.active = true and s.appointmentId is null and s.rescheduleRequestId is null order by b.professionalId, s.startAt")
     java.util.List<ProfessionalSlotEntity> freeSlots(@Param("professionalIds") java.util.List<Long> professionalIds,
                                                      @Param("locationId") Short locationId,
                                                      @Param("date") java.time.LocalDate date);
-    boolean existsByBlock_IdAndAppointmentIdIsNotNull(Long blockId);
+    @Query("select count(s) > 0 from ProfessionalSlotEntity s where s.block.id = :blockId and (s.appointmentId is not null or s.rescheduleRequestId is not null)")
+    boolean hasCommittedSlots(@Param("blockId") Long blockId);
     java.util.List<ProfessionalSlotEntity> findByBlock_Id(Long blockId);
     java.util.List<ProfessionalSlotEntity> findByAppointmentId(Long appointmentId);
+    java.util.List<ProfessionalSlotEntity> findByRescheduleRequestId(Long requestId);
+}
+
+interface RescheduleRequestsJpa extends JpaRepository<RescheduleRequestEntity, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from RescheduleRequestEntity r where r.id = :id")
+    Optional<RescheduleRequestEntity> lockById(@Param("id") Long id);
+    @Query("select r from RescheduleRequestEntity r where r.appointmentId = :appointmentId and r.statusId = :statusId")
+    java.util.List<RescheduleRequestEntity> findByAppointmentIdAndStatusId(@Param("appointmentId") Long appointmentId, @Param("statusId") Short statusId);
+    java.util.List<RescheduleRequestEntity> findByStatusIdOrderByCreatedAtAsc(Short statusId);
 }
 
 interface AppointmentsJpa extends JpaRepository<AppointmentEntity, Long> {

@@ -31,16 +31,19 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     private final AppointmentHistoriesJpa history;
     private final AffiliationsJpa affiliations;
     private final UsersJpa users;
+    private final RescheduleRequestsJpa reschedules;
+    private final RescheduleStatusesJpa rescheduleStatuses;
     private final Clock clock;
 
     SchedulingJpaAdapter(ProfessionalsJpa professionals, ProfessionalLocationsJpa professionalLocations,
                          SpecialtiesJpa specialties, LocationsJpa locations, AvailabilityBlocksJpa blocks,
                          ProfessionalSlotsJpa slots, AppointmentsJpa appointments, AppointmentStatusesJpa statuses,
-                         AppointmentHistoriesJpa history, AffiliationsJpa affiliations, UsersJpa users, Clock clock) {
+                         AppointmentHistoriesJpa history, AffiliationsJpa affiliations, UsersJpa users,
+                         RescheduleRequestsJpa reschedules, RescheduleStatusesJpa rescheduleStatuses, Clock clock) {
         this.professionals = professionals; this.professionalLocations = professionalLocations;
         this.specialties = specialties; this.locations = locations; this.blocks = blocks; this.slots = slots;
         this.appointments = appointments; this.statuses = statuses; this.history = history;
-        this.affiliations = affiliations; this.users = users; this.clock = clock;
+        this.affiliations = affiliations; this.users = users; this.reschedules = reschedules; this.rescheduleStatuses = rescheduleStatuses; this.clock = clock;
     }
 
     @Override @Transactional
@@ -136,7 +139,7 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
         List<LocalDateTime> requestedStarts = new ArrayList<>();
         for (int i = 0; i < needed; i++) requestedStarts.add(startAt.plusMinutes((long) SLOT_MINUTES * i));
         List<ProfessionalSlotEntity> locked = slots.lockForReservation(professionalId, locationId, requestedStarts);
-        if (locked.size() != needed || locked.stream().anyMatch(slot -> slot.appointmentId != null)
+        if (locked.size() != needed || locked.stream().anyMatch(slot -> slot.appointmentId != null || slot.rescheduleRequestId != null)
                 || !locked.stream().map(slot -> slot.startAt).toList().equals(requestedStarts)) {
             throw new SchedulingConflict("El horario ya no está disponible");
         }
@@ -228,6 +231,37 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
                 statusById(item.statusId).code, item.changedByUserId, item.changeSource, item.reason, item.changedAt)).toList();
     }
 
+    @Override @Transactional
+    public Ports.RescheduleView requestReschedule(Long patientUserId, Long appointmentId, Short locationId, LocalDateTime startAt) {
+        AppointmentEntity appointment = appointments.lockById(appointmentId).orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
+        if (!Objects.equals(appointment.patientUserId, patientUserId) || appointment.statusId.shortValue() != status("APPROVED").id.shortValue() || !appointment.scheduledStartAt.isAfter(LocalDateTime.now(clock))) throw new SchedulingConflict("La cita no puede reprogramarse");
+        if (locationId == null || startAt == null || !startAt.toLocalDate().isAfter(LocalDate.now(clock.withZone(BOGOTA)))) throw new IllegalArgumentException("Nuevo horario inválido");
+        if (!reschedules.findByAppointmentIdAndStatusId(appointmentId, rescheduleStatus("PENDING").id).isEmpty()) throw new SchedulingConflict("Ya existe una reprogramación pendiente");
+        SpecialtyEntity specialty = activeSpecialty(appointment.specialtyId);
+        if (professionals.reservable(appointment.specialtyId, locationId, appointment.professionalId).isEmpty()) throw new SchedulingConflict("La oferta ya no está disponible");
+        int needed = specialty.appointmentDurationMinutes / SLOT_MINUTES;
+        List<LocalDateTime> starts = new ArrayList<>(); for (int i = 0; i < needed; i++) starts.add(startAt.plusMinutes((long) SLOT_MINUTES * i));
+        List<ProfessionalSlotEntity> locked = slots.lockForReservation(appointment.professionalId, locationId, starts);
+        if (locked.size() != needed || locked.stream().anyMatch(s -> s.appointmentId != null || s.rescheduleRequestId != null) || !locked.stream().map(s -> s.startAt).toList().equals(starts)) throw new SchedulingConflict("El horario ya no está disponible");
+        RescheduleRequestEntity request = new RescheduleRequestEntity(); request.appointmentId = appointmentId; request.requestedLocationId = locationId; request.requestedStartAt = startAt; request.requestedEndAt = startAt.plusMinutes(specialty.appointmentDurationMinutes); request.statusId = rescheduleStatus("PENDING").id; request.requestedByUserId = patientUserId;
+        RescheduleRequestEntity saved = reschedules.saveAndFlush(request); locked.forEach(s -> s.rescheduleRequestId = saved.id); slots.saveAllAndFlush(locked);
+        addHistory(appointmentId, appointment.statusId, patientUserId, "USER", "Solicitud de reprogramación pendiente"); return rescheduleView(saved);
+    }
+
+    @Override @Transactional(readOnly = true) public List<Ports.RescheduleView> patientReschedules(Long patientUserId) { return reschedules.findAll().stream().filter(r -> Objects.equals(r.requestedByUserId, patientUserId)).map(this::rescheduleView).toList(); }
+    @Override @Transactional(readOnly = true) public List<Ports.RescheduleView> pendingReschedules() { return reschedules.findByStatusIdOrderByCreatedAtAsc(rescheduleStatus("PENDING").id).stream().map(this::rescheduleView).toList(); }
+    @Override @Transactional
+    public Ports.RescheduleView decideReschedule(Long adminUserId, Long requestId, String decision, String reason) {
+        if (!"APPROVE".equals(decision) && !"REJECT".equals(decision)) throw new IllegalArgumentException("Decisión inválida");
+        if ("REJECT".equals(decision) && (reason == null || reason.isBlank())) throw new IllegalArgumentException("El rechazo exige motivo");
+        RescheduleRequestEntity request = reschedules.lockById(requestId).orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+        if (request.statusId.shortValue() != rescheduleStatus("PENDING").id.shortValue()) throw new SchedulingConflict("La solicitud ya fue decidida");
+        AppointmentEntity appointment = appointments.lockById(request.appointmentId).orElseThrow(); List<ProfessionalSlotEntity> provisional = slots.findByRescheduleRequestId(request.id);
+        if ("APPROVE".equals(decision)) { slots.findByAppointmentId(appointment.id).forEach(s -> s.appointmentId = null); provisional.forEach(s -> { s.rescheduleRequestId = null; s.appointmentId = appointment.id; }); appointment.locationId = request.requestedLocationId; appointment.scheduledStartAt = request.requestedStartAt; appointment.scheduledEndAt = request.requestedEndAt; appointments.saveAndFlush(appointment); addHistory(appointment.id, appointment.statusId, adminUserId, "ADMIN", "Reprogramación aprobada"); }
+        else { provisional.forEach(s -> s.rescheduleRequestId = null); }
+        slots.saveAllAndFlush(provisional); request.statusId = rescheduleStatus("APPROVE".equals(decision) ? "APPROVED" : "REJECTED").id; request.decidedByUserId = adminUserId; request.decisionReason = "REJECT".equals(decision) ? normalizedReason(reason) : null; request.decidedAt = LocalDateTime.now(clock); return rescheduleView(reschedules.saveAndFlush(request));
+    }
+
     private ProfessionalEntity ownProfessional(Long userId) {
         return professionals.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("Profesional no encontrado"));
     }
@@ -262,7 +296,7 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     }
     private void ensureUncommitted(AvailabilityBlockEntity block) {
         requireFuture(block.availableDate);
-        if (slots.existsByBlock_IdAndAppointmentIdIsNotNull(block.id)) throw new SchedulingConflict("El bloque tiene citas comprometidas");
+        if (slots.hasCommittedSlots(block.id)) throw new SchedulingConflict("El bloque tiene citas o reprogramaciones comprometidas");
     }
     private SpecialtyEntity activeSpecialty(Short id) {
         return specialties.findById(id).filter(s -> s.active).orElseThrow(() -> new IllegalArgumentException("Especialidad no disponible"));
@@ -270,6 +304,7 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     private AppointmentStatusEntity status(String code) {
         return statuses.findByCode(code).orElseThrow(() -> new IllegalStateException("Estado faltante: " + code));
     }
+    private RescheduleStatusEntity rescheduleStatus(String code) { return rescheduleStatuses.findAll().stream().filter(s -> s.code.equals(code)).findFirst().orElseThrow(() -> new IllegalStateException("Estado de reprogramación faltante: " + code)); }
     private AppointmentStatusEntity statusById(Short id) { return statuses.findById(id).orElseThrow(() -> new IllegalStateException("Estado faltante")); }
     private void createSlots(AvailabilityBlockEntity block) {
         List<ProfessionalSlotEntity> generated = new ArrayList<>();
@@ -301,4 +336,6 @@ class SchedulingJpaAdapter implements Ports.Scheduling {
     }
     private Ports.AppointmentView appointmentView(AppointmentEntity a) { return appointmentView(a, statusById(a.statusId).code); }
     private String normalizedReason(String reason) { return reason == null || reason.isBlank() ? null : reason.trim(); }
+    private Ports.RescheduleView rescheduleView(RescheduleRequestEntity r) { AppointmentEntity a = appointments.findById(r.appointmentId).orElseThrow(); LocationEntity l = locations.findById(r.requestedLocationId).orElseThrow(); SpecialtyEntity s = specialties.findById(a.specialtyId).orElseThrow(); ProfessionalEntity p = professionals.findById(a.professionalId).orElseThrow(); UserEntity u = users.findById(p.userId).orElseThrow(); return new Ports.RescheduleView(r.id, r.appointmentId, rescheduleStatusById(r.statusId).code, r.requestedStartAt, r.requestedEndAt, l.name, s.name, u.firstName + " " + u.lastName, r.decisionReason); }
+    private RescheduleStatusEntity rescheduleStatusById(Short id) { return rescheduleStatuses.findById(id).orElseThrow(); }
 }

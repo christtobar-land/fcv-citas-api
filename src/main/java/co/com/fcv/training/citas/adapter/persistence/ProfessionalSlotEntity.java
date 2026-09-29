@@ -12,5 +12,6 @@ class ProfessionalSlotEntity {
     @Column(name = "start_at", nullable = false) LocalDateTime startAt;
     @Column(name = "end_at", nullable = false) LocalDateTime endAt;
     @Column(name = "appointment_id") Long appointmentId;
+    @Column(name = "reschedule_request_id") Long rescheduleRequestId;
     protected ProfessionalSlotEntity() {}
 }
