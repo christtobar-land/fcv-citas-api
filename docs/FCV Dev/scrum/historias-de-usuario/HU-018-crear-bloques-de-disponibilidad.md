@@ -2,7 +2,7 @@
 id: HU-018
 tipo: historia-de-usuario
 titulo: "Crear bloques de disponibilidad"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-004-disponibilidad-del-profesional]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ Puede crear múltiples bloques (por ejemplo mañana/tarde); cada uno se discreti
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `SchedulingIntegrationTest` | Bloque crea slots de 30 min. |
+| CA-02 | Verificado | `SchedulingIntegrationTest` | Solapamiento devuelve 409. |
+| CA-03 / DoD | Verificado | API/cliente REST | La relación de slots conserva intervalos separados. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Implementada mediante V5 y pantalla PROFESSIONAL.
 ## Notas y decisiones
 - La representación interna de slots se decide en [[HU-002-modelar-persistencia-3fn]].

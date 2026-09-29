@@ -63,6 +63,22 @@ El corte S4 incorpora gestión ADMIN de especialidades, profesionales y sus asoc
 
 Las operaciones de asociación reemplazan atómicamente la selección anterior y mantienen relaciones normalizadas. La duración de la especialidad es la única fuente de slots; la consulta de disponibilidad y la reserva todavía no forman parte de este corte.
 
+## DECISIÓN — 2026-09-29 · Agenda, disponibilidad y reservas (HU-018 a HU-024)
+
+Las fechas se representan como `YYYY-MM-DD`, las horas como `HH:mm[:ss]` y los instantes como `YYYY-MM-DDTHH:mm:ss`, interpretados en `America/Bogota`. Las franjas son futuras y sus límites siempre caen en intervalos de 30 minutos.
+
+| Operación | Acceso | Éxito | Regla relevante |
+|---|---|---|---|
+| `GET /api/v1/catalogs/specialties` | Autenticado | `200` | Solo especialidades activas para búsqueda. |
+| `GET|POST /api/v1/professional/availability-blocks` | PROFESSIONAL | `200`/`201` | Consulta solo bloques propios; creación valida sede asignada, estado activo, futuro y no solapamiento. |
+| `PATCH|DELETE /api/v1/professional/availability-blocks/{id}` | PROFESSIONAL dueño | `200`/`204` | No permite bloques pasados, ajenos o con slots comprometidos. |
+| `GET /api/v1/availability?locationId=&specialtyId=&date=&professionalId?` | USER | `200` | Solo profesionales/sedes/especialidades vigentes y slots completos consecutivos. |
+| `POST /api/v1/appointments` | USER | `201` | Reserva atómica; general crea `APPROVED`, especializada crea `REQUESTED`; conflicto de slot devuelve `409`. |
+| `GET /api/v1/admin/appointments` | ADMIN | `200` | Devuelve únicamente solicitudes `REQUESTED`. |
+| `POST /api/v1/admin/appointments/{id}/decision` | ADMIN | `200` | `APPROVE` conserva slots; `REJECT` exige `reason`, libera slots y deja `REJECTED`. |
+
+La migración V5 mantiene 3FN: bloques, slots, citas e historial son entidades separadas. Los slots referencian la cita cuando están retenidos u ocupados; las transiciones se registran en historial con fuente `SYSTEM`, `USER` o `ADMIN`. El bloqueo pesimista de los slots durante la reserva impide dos asignaciones al mismo horario.
+
 ### Impacto cross-repo antes del cambio REST
 
 - `citas-api`: entidades/puertos/servicios/adaptadores ADMIN, migración Flyway V4, pruebas y este contrato.
@@ -85,4 +101,4 @@ Las operaciones de asociación reemplazan atómicamente la selección anterior y
 
 ## PREGUNTA ABIERTA
 
-Las rutas, filtros, paginación y formatos de fecha/hora de las demás HU siguen sin contrato aprobado.
+Paginación, perfil completo, cancelación, reprogramación, agenda de citas, cierre y automatizaciones continúan sin contrato final.

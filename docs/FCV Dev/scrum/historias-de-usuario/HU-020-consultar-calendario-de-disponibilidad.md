@@ -2,7 +2,7 @@
 id: HU-020
 tipo: historia-de-usuario
 titulo: "Consultar calendario de disponibilidad"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-004-disponibilidad-del-profesional]]"
 esfuerzo: Medio
 sprint_sugerido: "Incremento 4"
@@ -45,10 +45,11 @@ La agenda de disponibilidad no sustituye la agenda visible de citas aprobadas.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `GET /professional/availability-blocks` | Muestra fecha, franja y sede propia. |
+| CA-02 | Verificado | Parámetros `date` y `locationId` | Consulta filtrable. |
+| CA-03 / DoD | Verificado | Ownership por JWT | No admite identificador de otro profesional. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Calendario propio integrado en la pantalla PROFESSIONAL.
 ## Notas y decisiones
 - El formato visual queda bajo el diseño aprobado.

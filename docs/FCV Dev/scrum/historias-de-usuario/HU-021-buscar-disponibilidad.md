@@ -2,7 +2,7 @@
 id: HU-021
 tipo: historia-de-usuario
 titulo: "Buscar disponibilidad"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-005-busqueda-y-reserva-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ Solo se muestran horarios que permiten todos los slots necesarios; tipo general/
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `GET /availability` y `UserBookingScreen` | Filtra sede, especialidad, profesional opcional y fecha. |
+| CA-02 | Verificado | Adaptador `SchedulingJpaAdapter` | Especialidades de 60 min requieren dos slots consecutivos. |
+| CA-03 / DoD | Verificado | Consulta de oferta vigente | Excluye asociaciones/sedes/profesionales no válidos. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Búsqueda real integrada con catálogo activo.
 ## Notas y decisiones
 - El tratamiento de concurrencia se prueba definitivamente en las HU de reserva.

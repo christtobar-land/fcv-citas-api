@@ -2,7 +2,7 @@
 id: HU-023
 tipo: historia-de-usuario
 titulo: "Solicitar cita especializada"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-005-busqueda-y-reserva-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ La solicitud nace `REQUESTED` y retiene slots para evitar doble reserva.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `SchedulingIntegrationTest` | Crea `REQUESTED` y retiene slots. |
+| CA-02 | Verificado | Bloqueo pesimista de slots | Impide segunda reserva de la franja. |
+| CA-03 / DoD | Verificado | Historial V5 | Registra fuente `USER`. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Solicitud especializada y retención implementadas.
 ## Notas y decisiones
 - La reserva queda liberada al rechazo mediante [[HU-024-resolver-solicitud-especializada]].

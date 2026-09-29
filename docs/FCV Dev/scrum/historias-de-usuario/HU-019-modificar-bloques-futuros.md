@@ -2,7 +2,7 @@
 id: HU-019
 tipo: historia-de-usuario
 titulo: "Modificar bloques futuros"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-004-disponibilidad-del-profesional]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ El PRD limita la modificación/eliminación a bloques futuros sin citas comprome
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `PATCH /professional/availability-blocks/{id}` | Recalcula slots en una transacción. |
+| CA-02 | Verificado | `DELETE /professional/availability-blocks/{id}` | Elimina slots de un bloque sin compromisos. |
+| CA-03 / DoD | Verificado | Validaciones ownership/futuro/slots | API rechaza bloque ajeno, pasado o comprometido. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Implementada con API y cliente PROFESSIONAL.
 ## Notas y decisiones
 - “Cita comprometida” se verificará contra estados/retenciones aprobados.

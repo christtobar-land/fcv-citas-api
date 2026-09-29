@@ -1,6 +1,6 @@
 # Índice de la LLM Wiki
 
-Última actualización: 2026-09-24. S2 de identidad, S3 de catálogos, afiliación inicial opcional y S4 de oferta administrable tienen contrato y evidencia cross-repo. Disponibilidad, reservas y automatizaciones siguen pendientes.
+Última actualización: 2026-09-29. Identidad, catálogos, afiliación inicial, oferta administrable, disponibilidad y reserva/decisión especializada tienen contrato y evidencia cross-repo. Perfil, ciclo posterior de citas y automatizaciones siguen pendientes.
 
 ## Lectura recomendada
 

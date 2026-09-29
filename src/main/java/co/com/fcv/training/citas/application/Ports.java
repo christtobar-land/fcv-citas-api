@@ -3,6 +3,9 @@ package co.com.fcv.training.citas.application;
 import co.com.fcv.training.citas.domain.Account;
 import co.com.fcv.training.citas.domain.RefreshSession;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +29,7 @@ public final class Ports {
 
     public interface Offer {
         List<SpecialtyView> specialties();
+        List<SpecialtyView> activeSpecialties();
         SpecialtyView createSpecialty(String code, String name, short durationMinutes, boolean general,
                                       boolean requiresAdminApproval);
         SpecialtyView patchSpecialty(Short id, String name, Short durationMinutes, Boolean general,
@@ -34,6 +38,20 @@ public final class Ports {
         void replaceSpecialties(Long professionalId, List<Short> specialtyIds, Short primarySpecialtyId);
         void replaceLocations(Long professionalId, List<Short> locationIds);
         void setProfessionalActive(Long professionalId, boolean active);
+    }
+
+    public interface Scheduling {
+        AvailabilityBlockView createBlock(Long professionalUserId, Short locationId, LocalDate date,
+                                          LocalTime startTime, LocalTime endTime);
+        List<AvailabilityBlockView> blocks(Long professionalUserId, LocalDate date, Short locationId);
+        AvailabilityBlockView updateBlock(Long professionalUserId, Long blockId, Short locationId,
+                                          LocalDate date, LocalTime startTime, LocalTime endTime);
+        void deleteBlock(Long professionalUserId, Long blockId);
+        List<AvailabilityOption> availability(Short locationId, Short specialtyId, Long professionalId, LocalDate date);
+        AppointmentView reserve(Long patientUserId, Long professionalId, Short locationId, Short specialtyId,
+                                LocalDateTime startAt, String reason);
+        List<AppointmentView> requestedAppointments();
+        AppointmentView decide(Long adminUserId, Long appointmentId, String decision, String reason);
     }
 
     public interface Sessions {
@@ -83,4 +101,12 @@ public final class Ports {
                                 boolean general, boolean requiresAdminApproval, boolean active) {}
     public record ProfessionalView(Long id, Long userId, String professionalCode, String licenseNumber,
                                    boolean active) {}
+    public record AvailabilityBlockView(Long id, Long professionalId, short locationId, LocalDate date,
+                                        LocalTime startTime, LocalTime endTime) {}
+    public record AvailabilityOption(Long professionalId, short locationId, short specialtyId,
+                                     LocalDateTime startAt, LocalDateTime endAt, short durationMinutes,
+                                     boolean general) {}
+    public record AppointmentView(Long id, Long patientUserId, Long professionalId, short locationId,
+                                  short specialtyId, String status, LocalDateTime startAt, LocalDateTime endAt,
+                                  String reason) {}
 }

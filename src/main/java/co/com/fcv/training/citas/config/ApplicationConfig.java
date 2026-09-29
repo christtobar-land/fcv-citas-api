@@ -5,6 +5,7 @@ import co.com.fcv.training.citas.application.CatalogService;
 import co.com.fcv.training.citas.application.Ports;
 import co.com.fcv.training.citas.application.ProfessionalService;
 import co.com.fcv.training.citas.application.SpecialtyService;
+import co.com.fcv.training.citas.application.SchedulingService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -46,4 +47,6 @@ class ApplicationConfig {
                                                   Ports.Offer offer, Ports.Transactions transactions) {
         return new ProfessionalService(accounts, passwords, offer, transactions);
     }
+
+    @Bean SchedulingService schedulingService(Ports.Scheduling scheduling) { return new SchedulingService(scheduling); }
 }

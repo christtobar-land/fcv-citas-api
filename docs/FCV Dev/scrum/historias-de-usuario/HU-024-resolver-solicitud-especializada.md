@@ -2,7 +2,7 @@
 id: HU-024
 tipo: historia-de-usuario
 titulo: "Resolver solicitud especializada"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-005-busqueda-y-reserva-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ El rechazo exige motivo; aprobar cambia a `APPROVED`, rechazar a `REJECTED` y li
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `POST /admin/appointments/{id}/decision` | APPROVE conserva la reserva. |
+| CA-02 | Verificado | `SchedulingIntegrationTest` | REJECT exige motivo y libera slots. |
+| CA-03 / DoD | Verificado | Seguridad/validación API | Rol, transición y motivo se validan antes de cambiar estado. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Decisión ADMIN y panel de pendientes implementados.
 ## Notas y decisiones
 - La bandeja se especifica en [[HU-031-consultar-bandeja-administrativa]].

@@ -2,7 +2,7 @@
 id: HU-022
 tipo: historia-de-usuario
 titulo: "Reservar cita general"
-estado: Pendiente de aprobación
+estado: Implementada en corte de agenda
 epica: "[[EP-005-busqueda-y-reserva-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: "Incremento 4"
@@ -46,10 +46,11 @@ La disponibilidad se debe revalidar en la confirmación para impedir doble reser
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Verificado | `SchedulingIntegrationTest` | Medicina General crea `APPROVED`. |
+| CA-02 | Verificado | `SchedulingIntegrationTest` | Segunda reserva sobre slot ocupado devuelve 409. |
+| CA-03 / DoD | Verificado | Historial V5 | Registra `APPROVED` con fuente `SYSTEM`. |
 ## Historial de validación
 - 2026-09-17 — HU creada en estado `Pendiente de aprobación`.
+- 2026-09-29 — Reserva atómica implementada y probada.
 ## Notas y decisiones
 - Medicina General depende de la especialidad/catálogo acordado.

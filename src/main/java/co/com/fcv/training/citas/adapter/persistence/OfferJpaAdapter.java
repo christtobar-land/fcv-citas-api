@@ -29,6 +29,11 @@ class OfferJpaAdapter implements Ports.Offer {
         return specialties.findAllByOrderById().stream().map(this::specialty).toList();
     }
 
+    @Override @Transactional(readOnly = true)
+    public List<Ports.SpecialtyView> activeSpecialties() {
+        return specialties.findAllByOrderById().stream().filter(s -> s.active).map(this::specialty).toList();
+    }
+
     @Override @Transactional
     public Ports.SpecialtyView createSpecialty(String code, String name, short durationMinutes,
                                                boolean general, boolean requiresAdminApproval) {

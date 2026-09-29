@@ -2,6 +2,7 @@ package co.com.fcv.training.citas.adapter.web;
 
 import co.com.fcv.training.citas.application.AuthFailure;
 import co.com.fcv.training.citas.application.DuplicateIdentity;
+import co.com.fcv.training.citas.application.SchedulingConflict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -26,6 +27,11 @@ class ApiErrors {
     @ExceptionHandler(AuthFailure.class)
     ResponseEntity<ProblemDetail> unauthorized(AuthFailure ignored) {
         return problem(HttpStatus.UNAUTHORIZED, "Credenciales o sesión inválidas");
+    }
+
+    @ExceptionHandler(SchedulingConflict.class)
+    ResponseEntity<ProblemDetail> conflict(SchedulingConflict ignored) {
+        return problem(HttpStatus.CONFLICT, "Conflicto de agenda");
     }
 
     private ResponseEntity<ProblemDetail> problem(HttpStatus status, String detail) {

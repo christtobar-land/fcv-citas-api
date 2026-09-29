@@ -11,6 +11,7 @@ public class SpecialtyService {
     private final Ports.Offer offer;
     public SpecialtyService(Ports.Offer offer) { this.offer = offer; }
     public List<Ports.SpecialtyView> all() { return offer.specialties(); }
+    public List<Ports.SpecialtyView> active() { return offer.activeSpecialties(); }
     public Ports.SpecialtyView create(Create command) {
         return offer.createSpecialty(command.code(), command.name(), command.durationMinutes(),
                 command.general(), command.requiresAdminApproval());
