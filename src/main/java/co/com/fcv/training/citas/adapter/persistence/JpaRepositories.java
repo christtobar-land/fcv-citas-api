@@ -7,15 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
-interface UsersJpa extends JpaRepository<UserEntity, Long> {
-    Optional<UserEntity> findByEmail(String email);
-    boolean existsByEmail(String email);
-    boolean existsByDocumentTypeAndDocumentNumber(String type, String number);
-}
 
-interface RolesJpa extends JpaRepository<RoleEntity, Short> {
-    Optional<RoleEntity> findByCode(String code);
-}
+
 
 interface SessionsJpa extends JpaRepository<SessionEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -39,6 +39,14 @@ public final class Ports {
         long accessSeconds();
     }
 
+    public record PasswordResetRecord(Long id, Long userId, String tokenHash, java.time.LocalDateTime expiresAt, java.time.LocalDateTime usedAt) {}
+
+    public interface PasswordResets {
+        void save(Long userId, String tokenHash, java.time.LocalDateTime expiresAt);
+        Optional<PasswordResetRecord> byTokenHash(String tokenHash);
+        void markUsed(Long id, java.time.LocalDateTime usedAt);
+    }
+
     public interface Transactions {
         <T> T run(Supplier<T> work);
     }

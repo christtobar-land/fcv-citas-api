@@ -43,6 +43,8 @@ class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/availability/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(guard, UsernamePasswordAuthenticationFilter.class)
@@ -59,7 +61,7 @@ class SecurityConfig {
     @Bean CorsConfigurationSource corsConfigurationSource(@Value("${app.cors.frontend-origin}") String origin) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(origin));
-        config.setAllowedMethods(List.of("POST", "GET", "OPTIONS"));
+        config.setAllowedMethods(List.of("POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-Requested-With"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

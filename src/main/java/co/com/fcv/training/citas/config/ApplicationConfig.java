@@ -29,7 +29,8 @@ class ApplicationConfig {
     }
 
     @Bean AuthService authService(Ports.Accounts accounts, Ports.Sessions sessions, Ports.Passwords passwords,
-                                  Ports.Tokens tokens, Ports.Transactions transactions, Clock clock) {
-        return new AuthService(accounts, sessions, passwords, tokens, transactions, clock);
+                                  Ports.Tokens tokens, Ports.Transactions transactions,
+                                  Ports.PasswordResets passwordResets, Clock clock) {
+        return new AuthService(accounts, sessions, passwords, tokens, transactions, passwordResets, clock);
     }
 }

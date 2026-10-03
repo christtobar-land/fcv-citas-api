@@ -4,6 +4,7 @@ import co.com.fcv.training.citas.application.AuthFailure;
 import co.com.fcv.training.citas.application.AuthService;
 import co.com.fcv.training.citas.domain.Account;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,13 @@ class AuthController {
                             String documentNumber, String email, String phone, String role) {}
     record LoginRequest(@NotBlank String email, @NotBlank String password) {}
     record AccessResponse(String accessToken, String tokenType, long expiresIn) {}
+    record ForgotPasswordRequest(@NotBlank @Email @Size(max = 254) String email) {}
+    record ForgotPasswordResponse(String message, String devToken) {}
+    record ResetPasswordRequest(
+        @NotBlank(message = "El código o token es obligatorio") String token,
+        @NotBlank(message = "La nueva contraseña es obligatoria") @Size(min = 6, max = 72, message = "La contraseña debe tener entre 6 y 72 caracteres") String newPassword
+    ) {}
+    record ResetPasswordResponse(String message) {}
 
     private final AuthService auth;
     private final boolean secureCookie;
@@ -66,6 +74,18 @@ class AuthController {
     ResponseEntity<Void> logout(@CookieValue(name = "refresh_token", required = false) String token) {
         auth.logout(token);
         return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie("", Duration.ZERO)).build();
+    }
+
+    @PostMapping("/forgot-password")
+    ResponseEntity<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        AuthService.PasswordResetResult result = auth.requestPasswordReset(request.email());
+        return ResponseEntity.ok(new ForgotPasswordResponse(result.message(), result.devToken()));
+    }
+
+    @PostMapping("/reset-password")
+    ResponseEntity<ResetPasswordResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        auth.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(new ResetPasswordResponse("Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva clave."));
     }
 
     private ResponseEntity<AccessResponse> tokenResponse(AuthService.Tokens tokens) {

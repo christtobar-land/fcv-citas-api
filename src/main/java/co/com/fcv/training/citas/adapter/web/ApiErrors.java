@@ -13,9 +13,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 class ApiErrors {
-    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class, IllegalArgumentException.class})
-    ResponseEntity<ProblemDetail> invalid(Exception ignored) {
-        return problem(HttpStatus.BAD_REQUEST, "Datos inválidos");
+    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class, IllegalArgumentException.class, IllegalStateException.class})
+    ResponseEntity<ProblemDetail> invalid(Exception ex) {
+        String detail = ex.getMessage();
+        if (ex instanceof MethodArgumentNotValidException manv && manv.getBindingResult().getFieldError() != null) {
+            detail = manv.getBindingResult().getFieldError().getDefaultMessage();
+        } else if (detail == null || detail.isBlank() || ex instanceof HttpMessageNotReadableException) {
+            detail = "Datos inválidos";
+        }
+        return problem(HttpStatus.BAD_REQUEST, detail);
     }
 
     @ExceptionHandler({DuplicateIdentity.class, DataIntegrityViolationException.class})

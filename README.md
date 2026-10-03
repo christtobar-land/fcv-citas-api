@@ -31,3 +31,28 @@ docker compose -f compose.test.yml run --rm api-test mvn test
 ```
 
 El contenedor Maven usa Java 21; Testcontainers crea un MySQL 8.4 temporal. No requiere Java/Maven instalados en el host.
+
+## Datos semilla para pruebas funcionales
+
+La base de datos arranca **limpia**: Flyway (al iniciar la API) solo crea el esquema y los **catálogos** (2 sedes, 12 especialidades, EPS/planes, roles, estados). No hay usuarios en el código. Para probar todos los flujos se carga un script de inserción aparte:
+
+1. Arranca MySQL y la API una vez (Flyway migra el esquema).
+2. Ejecuta el seed:
+
+```powershell
+.\scripts\seed-db.ps1 -Container <contenedor-mysql> -RootPassword "<clave-root>" -Database citas_fcv_training
+```
+
+Sin Docker: `mysql -u root -p --default-character-set=utf8mb4 citas_fcv_training < database/seed/seed-test-data.sql`
+
+| Rol | Correo | Detalle |
+|---|---|---|
+| Administrador | `admin1@medih.com` | Gestión de profesionales, aprobaciones y catálogos |
+| Médico | `medico1@medih.com` … `medico12@medih.com` | **Sede 1 · El Bosque**: 1 médico por cada especialidad |
+| Médico | `medico13@medih.com` … `medico24@medih.com` | **Sede 2 · Norte**: 1 médico por cada especialidad |
+
+- Contraseña de todas las cuentas semilla: `medih123`.
+- Cada médico tiene **una sola sede y una sola especialidad** (1 Medicina General, 2 Cardiología Adulto, 3 Cardiología Pediátrica, 4 Medicina Interna, 5 Pediatría, 6 Nefrología, 7 Urología, 8 Gastroenterología, 9 Neumología Adulto, 10 Endocrinología, 11 Ortopedia y Traumatología, 12 Neurología).
+- Agenda: lunes a sábado, 07:00–12:00 y 14:00–17:00, desde el día siguiente hasta el **31 de octubre de 2026**. Después, cada médico publica su agenda desde su portal.
+- **Pacientes**: no hay semilla; se registran desde la UI (`/register`) y quedan con rol `USER`.
+- El script es idempotente: re-ejecutarlo no duplica datos.
