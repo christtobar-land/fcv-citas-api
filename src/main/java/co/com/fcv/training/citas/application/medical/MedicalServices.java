@@ -343,7 +343,7 @@ public class MedicalServices {
 
         return professionals.stream().map(p -> {
             UserEntity u = p.getUser();
-            String fullName = "Dr(a). " + (u != null ? u.getFirstName() + " " + u.getLastName() : "Profesional");
+            String fullName = (u != null ? u.getFirstName() + " " + u.getLastName() : "Profesional");
             List<Short> sIds = p.getSpecialties() != null ? p.getSpecialties().stream().map(SpecialtyEntity::getId).toList() : List.of();
             List<Short> lIds = p.getLocations() != null ? p.getLocations().stream().map(LocationEntity::getId).toList() : List.of();
             return new ProfessionalDto(p.getId(), fullName, p.getLicenseNumber(), p.getProfessionalCode(), sIds, lIds, p.getActive());
@@ -386,7 +386,7 @@ public class MedicalServices {
                 results.add(new AvailableSlotDto(
                     s.getId(),
                     s.getAvailabilityBlock().getProfessional().getId(),
-                    "Dr(a). " + u.getFirstName() + " " + u.getLastName(),
+                    u.getFirstName() + " " + u.getLastName(),
                     s.getAvailabilityBlock().getProfessional().getLicenseNumber(),
                     s.getAvailabilityBlock().getLocation().getId(),
                     s.getAvailabilityBlock().getLocation().getName(),
@@ -406,7 +406,7 @@ public class MedicalServices {
                     results.add(new AvailableSlotDto(
                         s1.getId(),
                         s1.getAvailabilityBlock().getProfessional().getId(),
-                        "Dr(a). " + u.getFirstName() + " " + u.getLastName(),
+                        u.getFirstName() + " " + u.getLastName(),
                         s1.getAvailabilityBlock().getProfessional().getLicenseNumber(),
                         s1.getAvailabilityBlock().getLocation().getId(),
                         s1.getAvailabilityBlock().getLocation().getName(),
@@ -433,7 +433,7 @@ public class MedicalServices {
                 return new AppointmentDto(
                     a.getId(),
                     a.getProfessional().getId(),
-                    "Dr(a). " + u.getFirstName() + " " + u.getLastName(),
+                    u.getFirstName() + " " + u.getLastName(),
                     a.getProfessional().getLicenseNumber(),
                     a.getLocation().getId(),
                     a.getLocation().getName(),
@@ -546,7 +546,7 @@ public class MedicalServices {
         return new AppointmentDto(
             saved.getId(),
             professional.getId(),
-            "Dr(a). " + profUser.getFirstName() + " " + profUser.getLastName(),
+            profUser.getFirstName() + " " + profUser.getLastName(),
             professional.getLicenseNumber(),
             location.getId(),
             location.getName(),
@@ -648,7 +648,7 @@ public class MedicalServices {
         return new AppointmentDto(
             updated.getId(),
             updated.getProfessional().getId(),
-            "Dr(a). " + profUser.getFirstName() + " " + profUser.getLastName(),
+            profUser.getFirstName() + " " + profUser.getLastName(),
             updated.getProfessional().getLicenseNumber(),
             updated.getLocation().getId(),
             updated.getLocation().getName(),
@@ -766,7 +766,7 @@ public class MedicalServices {
 
             short dur = (short) java.time.Duration.between(a.getScheduledStartAt(), a.getScheduledEndAt()).toMinutes();
             UserEntity profUser = a.getProfessional().getUser();
-            String profName = "Dr(a). " + (profUser != null ? profUser.getFirstName() + " " + profUser.getLastName() : "");
+            String profName = (profUser != null ? profUser.getFirstName() + " " + profUser.getLastName() : "");
 
             return new ProfessionalAppointmentDto(
                 a.getId(),
@@ -873,7 +873,7 @@ public class MedicalServices {
             }
 
             UserEntity profUser = a.getProfessional().getUser();
-            String profName = "Dr(a). " + (profUser != null ? profUser.getFirstName() + " " + profUser.getLastName() : "");
+            String profName = (profUser != null ? profUser.getFirstName() + " " + profUser.getLastName() : "");
             short dur = (short) java.time.Duration.between(a.getScheduledStartAt(), a.getScheduledEndAt()).toMinutes();
             String createdAtStr = a.getCreatedAt() != null ? a.getCreatedAt().format(dtf) : a.getScheduledStartAt().format(dtf);
 
@@ -1080,7 +1080,7 @@ public class MedicalServices {
 
         ProfessionalEntity savedProf = professionalRepository.save(prof);
 
-        String fullName = "Dr(a). " + savedUser.getFirstName() + " " + savedUser.getLastName();
+        String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
         List<Short> sIds = savedProf.getSpecialties() != null ? savedProf.getSpecialties().stream().map(SpecialtyEntity::getId).toList() : List.of();
         List<Short> lIds = savedProf.getLocations() != null ? savedProf.getLocations().stream().map(LocationEntity::getId).toList() : List.of();
 
@@ -1239,7 +1239,7 @@ public class MedicalServices {
             long bookedSlots = slotRepository.countByAvailabilityBlockIdAndAppointmentIdIsNotNull(b.getId());
             boolean canDelete = (bookedSlots == 0);
             UserEntity u = b.getProfessional().getUser();
-            String profName = "Dr(a). " + (u != null ? u.getFirstName() + " " + u.getLastName() : "");
+            String profName = (u != null ? u.getFirstName() + " " + u.getLastName() : "");
 
             return new AvailabilityBlockDto(
                 b.getId(),
@@ -1331,7 +1331,7 @@ public class MedicalServices {
 
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
         UserEntity u = professional.getUser();
-        String profName = "Dr(a). " + (u != null ? u.getFirstName() + " " + u.getLastName() : "");
+        String profName = (u != null ? u.getFirstName() + " " + u.getLastName() : "");
 
         return new AvailabilityBlockDto(
             savedBlock.getId(),
