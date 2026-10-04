@@ -50,6 +50,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
 
     @Query("SELECT a FROM AppointmentEntity a " +
            "WHERE a.professional.id = :professionalId " +
+           "AND a.status.code NOT IN ('REQUESTED', 'REJECTED') " +
            "AND (:startAt IS NULL OR a.scheduledStartAt >= :startAt) " +
            "AND (:endAt IS NULL OR a.scheduledStartAt <= :endAt) " +
            "ORDER BY a.scheduledStartAt ASC")
@@ -61,6 +62,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
 
     @Query("SELECT a FROM AppointmentEntity a " +
            "WHERE a.professional.id = :professionalId " +
+           "AND a.status.code NOT IN ('REQUESTED', 'REJECTED') " +
            "AND (:locationId IS NULL OR a.location.id = :locationId) " +
            "AND (:startAt IS NULL OR a.scheduledStartAt >= :startAt) " +
            "AND (:endAt IS NULL OR a.scheduledStartAt <= :endAt) " +
@@ -80,7 +82,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
     );
 
     @Query("SELECT a FROM AppointmentEntity a " +
-           "WHERE a.status.isTerminal = false " +
+           "WHERE a.status.code = 'APPROVED' " +
            "AND a.scheduledEndAt < :beforeDateTime")
     List<AppointmentEntity> findPastUnclosedAppointments(
         @Param("beforeDateTime") java.time.LocalDateTime beforeDateTime
