@@ -9,6 +9,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.Clock;
 
 @Configuration
+@org.springframework.scheduling.annotation.EnableAsync
+@org.springframework.boot.context.properties.EnableConfigurationProperties(N8nProperties.class)
 class ApplicationConfig {
     @Bean Clock clock() { return Clock.systemUTC(); }
 

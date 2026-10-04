@@ -88,6 +88,23 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         @Param("beforeDateTime") java.time.LocalDateTime beforeDateTime
     );
 
+    @Query("SELECT a FROM AppointmentEntity a " +
+           "WHERE a.status.code = 'APPROVED' " +
+           "AND a.scheduledStartAt >= :fromAt AND a.scheduledStartAt < :toAt " +
+           "ORDER BY a.scheduledStartAt ASC")
+    List<AppointmentEntity> findApprovedStartingBetween(
+        @Param("fromAt") java.time.LocalDateTime fromAt,
+        @Param("toAt") java.time.LocalDateTime toAt
+    );
+
+    @Query("SELECT a FROM AppointmentEntity a " +
+           "WHERE a.scheduledStartAt >= :fromAt AND a.scheduledStartAt < :toAt " +
+           "ORDER BY a.scheduledStartAt ASC")
+    List<AppointmentEntity> findStartingBetween(
+        @Param("fromAt") java.time.LocalDateTime fromAt,
+        @Param("toAt") java.time.LocalDateTime toAt
+    );
+
     @Query("SELECT COUNT(a) FROM AppointmentEntity a WHERE a.location.id = :locationId AND a.status.code = 'PENDING_APPROVAL'")
     long countPendingApprovalByLocationId(@Param("locationId") Short locationId);
 }

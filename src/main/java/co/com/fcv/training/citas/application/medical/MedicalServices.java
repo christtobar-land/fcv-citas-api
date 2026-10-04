@@ -5,6 +5,8 @@ import co.com.fcv.training.citas.adapter.persistence.RolesJpa;
 import co.com.fcv.training.citas.adapter.persistence.UserEntity;
 import co.com.fcv.training.citas.adapter.persistence.UsersJpa;
 import co.com.fcv.training.citas.adapter.persistence.medical.*;
+import co.com.fcv.training.citas.application.automation.AppointmentNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,7 @@ public class MedicalServices {
     private final UserInsuranceAffiliationRepository affiliationRepository;
     private final UsersJpa userRepository;
     private final RolesJpa rolesRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MedicalServices(
         LocationRepository locationRepository,
@@ -44,7 +48,8 @@ public class MedicalServices {
         EpsRepository epsRepository,
         UserInsuranceAffiliationRepository affiliationRepository,
         UsersJpa userRepository,
-        RolesJpa rolesRepository
+        RolesJpa rolesRepository,
+        ApplicationEventPublisher eventPublisher
     ) {
         this.locationRepository = locationRepository;
         this.specialtyRepository = specialtyRepository;
@@ -58,6 +63,31 @@ public class MedicalServices {
         this.affiliationRepository = affiliationRepository;
         this.userRepository = userRepository;
         this.rolesRepository = rolesRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Publica un evento mínimo (sin datos clínicos) para notificar al paciente vía n8n.
+     * Se entrega después del commit; si n8n no está configurado el evento simplemente se ignora.
+     */
+    private void publishNotification(String eventType, AppointmentEntity a, String reason) {
+        UserEntity patient = a.getPatient();
+        if (patient == null) {
+            return;
+        }
+        eventPublisher.publishEvent(new AppointmentNotificationEvent(
+            AppointmentNotificationEvent.newId(),
+            eventType,
+            OffsetDateTime.now(),
+            a.getId(),
+            a.getStatus().getCode(),
+            patient.getFirstName(),
+            patient.getEmail(),
+            a.getSpecialty().getName(),
+            a.getLocation().getName(),
+            a.getScheduledStartAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            reason
+        ));
     }
 
     // ==================== DTOs ====================
@@ -507,6 +537,9 @@ public class MedicalServices {
         history.setChangeSource("USER");
         history.setReason("Creación inicial de la cita");
         historyRepository.save(history);
+        if ("APPROVED".equals(statusCode)) {
+            publishNotification(AppointmentNotificationEvent.APPROVED, saved, null);
+        }
 
         UserEntity profUser = professional.getUser();
         DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -608,6 +641,7 @@ public class MedicalServices {
             ? cmd.reason()
             : "Reprogramación automática inmediata a nueva franja horaria");
         historyRepository.save(history);
+        publishNotification(AppointmentNotificationEvent.RESCHEDULED, updated, cmd.reason());
 
         UserEntity profUser = updated.getProfessional().getUser();
         DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -662,6 +696,7 @@ public class MedicalServices {
         history.setChangeSource("USER");
         history.setReason(reason != null && !reason.isBlank() ? reason : "Cancelación voluntaria por el paciente");
         historyRepository.save(history);
+        publishNotification(AppointmentNotificationEvent.CANCELLED, appointment, reason);
     }
 
     // ==================== AUTO-CIERRE DE CITAS NO ASISTIDAS (VENCIDAS) ====================
@@ -896,6 +931,7 @@ public class MedicalServices {
         history.setChangeSource("ADMIN");
         history.setReason("Aprobación y confirmación de cupo especializado por administración médica");
         historyRepository.save(history);
+        publishNotification(AppointmentNotificationEvent.APPROVED, appointment, null);
     }
 
     @Transactional
@@ -933,6 +969,7 @@ public class MedicalServices {
         history.setChangeSource("ADMIN");
         history.setReason(reason.trim());
         historyRepository.save(history);
+        publishNotification(AppointmentNotificationEvent.REJECTED, appointment, reason.trim());
     }
 
     @Transactional(readOnly = true)

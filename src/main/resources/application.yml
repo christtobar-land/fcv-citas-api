@@ -27,3 +27,10 @@ app:
   cookie:
     secure: ${REFRESH_COOKIE_SECURE:true}
     same-site: ${REFRESH_COOKIE_SAME_SITE:None}
+  n8n:
+    enabled: ${N8N_ENABLED:false}
+    webhook-url: ${N8N_WEBHOOK_URL:}
+    webhook-secret: ${N8N_WEBHOOK_SECRET:}
+    service-token: ${N8N_SERVICE_TOKEN:}
+    timeout-seconds: ${N8N_TIMEOUT_SECONDS:5}
+    max-attempts: ${N8N_MAX_ATTEMPTS:3}

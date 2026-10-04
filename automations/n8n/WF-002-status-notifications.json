@@ -1,0 +1,243 @@
+{
+  "name": "WF-002 - Notificación por Cambio de Estado",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "medihealth-appointment-status",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-1",
+      "name": "Webhook API Citas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $headers['x-webhook-secret'] }}",
+              "operation": "equals",
+              "value2": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "if-valid-secret",
+      "name": "¿Secreto Válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"rejected\",\n  \"message\": \"Secreto de webhook inválido\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "respond-unauthorized",
+      "name": "Respuesta 401 No Autorizado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"eventId\": \"{{ $json.body.eventId }}\",\n  \"eventType\": \"{{ $json.body.eventType }}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-success",
+      "name": "Respuesta 200 Recibido",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.eventType }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "APPOINTMENT_APPROVED",
+              "output": 0
+            },
+            {
+              "value2": "APPOINTMENT_REJECTED",
+              "output": 1
+            },
+            {
+              "value2": "APPOINTMENT_RESCHEDULED",
+              "output": 2
+            },
+            {
+              "value2": "APPOINTMENT_CANCELLED",
+              "output": 3
+            }
+          ]
+        }
+      },
+      "id": "switch-event-type",
+      "name": "Clasificar Evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.patientEmail }}",
+        "subject": "=Cita Médica Confirmada - MediHealth Plus",
+        "message": "=Estimado/a {{ $json.body.patientFirstName }},\n\nNos complace informarle que su cita para {{ $json.body.specialty }} en {{ $json.body.location }} ha sido confirmada para el {{ $json.body.scheduledStartAt }}.\n\nCordialmente,\nEquipo MediHealth Plus",
+        "options": {}
+      },
+      "id": "gmail-approved",
+      "name": "Gmail - Aprobada",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1160, 80],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.patientEmail }}",
+        "subject": "=Actualización sobre su Solicitud de Cita - MediHealth Plus",
+        "message": "=Estimado/a {{ $json.body.patientFirstName }},\n\nLe informamos que su solicitud para {{ $json.body.specialty }} no pudo ser aprobada.\n\nMotivo: {{ $json.body.reason || 'No especificado' }}\n\nPuede solicitar una nueva cita verificando los requisitos de su orden médica.\n\nCordialmente,\nEquipo MediHealth Plus",
+        "options": {}
+      },
+      "id": "gmail-rejected",
+      "name": "Gmail - Rechazada",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1160, 200],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.patientEmail }}",
+        "subject": "=Cita Reprogramada con Éxito - MediHealth Plus",
+        "message": "=Estimado/a {{ $json.body.patientFirstName }},\n\nSu cita para {{ $json.body.specialty }} ha sido reprogramada con éxito.\nNueva fecha: {{ $json.body.scheduledStartAt }}\nSede: {{ $json.body.location }}\n\nCordialmente,\nEquipo MediHealth Plus",
+        "options": {}
+      },
+      "id": "gmail-rescheduled",
+      "name": "Gmail - Reprogramada",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1160, 320],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.patientEmail }}",
+        "subject": "=Cancelación de Cita - MediHealth Plus",
+        "message": "=Estimado/a {{ $json.body.patientFirstName }},\n\nLe confirmamos que su cita médica para {{ $json.body.specialty }} ha sido cancelada.\n\nMotivo: {{ $json.body.reason || 'Cancelación solicitada' }}\n\nCordialmente,\nEquipo MediHealth Plus",
+        "options": {}
+      },
+      "id": "gmail-cancelled",
+      "name": "Gmail - Cancelada",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1160, 440],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook API Citas": {
+      "main": [
+        [
+          {
+            "node": "¿Secreto Válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Secreto Válido?": {
+      "main": [
+        [
+          {
+            "node": "Respuesta 200 Recibido",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Clasificar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta 401 No Autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar Evento": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Aprobada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail - Rechazada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail - Reprogramada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail - Cancelada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

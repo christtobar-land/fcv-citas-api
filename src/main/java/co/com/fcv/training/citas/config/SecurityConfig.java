@@ -30,8 +30,19 @@ class SecurityConfig {
         return registration;
     }
 
+    @Bean ServiceTokenFilter serviceTokenFilter(N8nProperties props) {
+        return new ServiceTokenFilter(props);
+    }
+
+    @Bean FilterRegistrationBean<ServiceTokenFilter> serviceTokenRegistration(ServiceTokenFilter filter) {
+        FilterRegistrationBean<ServiceTokenFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     @Bean SecurityFilterChain security(HttpSecurity http, JwtTokens tokens, AuthRequestGuard guard,
-                                       ProblemWriter problems, CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                       ProblemWriter problems, CorsConfigurationSource corsConfigurationSource,
+                                       ServiceTokenFilter serviceTokenFilter) throws Exception {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             List<String> roles = jwt.getClaimAsStringList("roles");
@@ -46,7 +57,9 @@ class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/availability/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/v1/automation/**").hasAnyAuthority("ROLE_AUTOMATION", "ROLE_ADMIN")
                         .anyRequest().authenticated())
+                .addFilterBefore(serviceTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(guard, UsernamePasswordAuthenticationFilter.class)
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.decoder(tokens.accessDecoder()).jwtAuthenticationConverter(converter))
@@ -62,7 +75,7 @@ class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(origin));
         config.setAllowedMethods(List.of("POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-Requested-With"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-Requested-With", "X-Api-Key"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);

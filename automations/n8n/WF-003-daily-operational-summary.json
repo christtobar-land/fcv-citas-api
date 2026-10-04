@@ -1,0 +1,112 @@
+{
+  "name": "WF-003 - Resumen Operativo Diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-daily-8pm",
+      "name": "Schedule Diario (8:00 PM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ ($env.API_BASE_URL || 'http://localhost:8080') + '/api/v1/automation/summary/daily' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.N8N_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-get-summary",
+      "name": "Consultar Resumen Diario (API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst date = data.date || new Date().toISOString().slice(0, 10);\nconst total = data.total || 0;\nconst rows = data.rows || [];\n\nlet htmlRows = rows.map(r => `<tr><td style=\"padding:6px;border:1px solid #ddd;\">${r.location}</td><td style=\"padding:6px;border:1px solid #ddd;\">${r.specialty}</td><td style=\"padding:6px;border:1px solid #ddd;\">${r.status}</td><td style=\"padding:6px;border:1px solid #ddd;text-align:right;\"><b>${r.total}</b></td></tr>`).join('');\n\nconst body = `<h3>Resumen Operativo Diario - MediHealth Plus (${date})</h3><p>Total de citas del día: <b>${total}</b></p><table style=\"border-collapse:collapse;width:100%;font-family:sans-serif;\"><thead><tr style=\"background:#f2f2f2;\"><th style=\"padding:6px;border:1px solid #ddd;\">Sede</th><th style=\"padding:6px;border:1px solid #ddd;\">Especialidad</th><th style=\"padding:6px;border:1px solid #ddd;\">Estado</th><th style=\"padding:6px;border:1px solid #ddd;\">Cantidad</th></tr></thead><tbody>${htmlRows || '<tr><td colspan=\"4\" style=\"padding:6px;text-align:center;\">Sin actividad registrada</td></tr>'}</tbody></table>`;\n\nreturn [{ json: { date, total, htmlBody: body } }];"
+      },
+      "id": "format-summary-html",
+      "name": "Formatear Resumen HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.ADMIN_NOTIFICATIONS_EMAIL || 'admin@medihealth.fcv.co' }}",
+        "subject": "=Resumen Operativo Diario - {{ $json.date }} - MediHealth Plus",
+        "message": "={{ $json.htmlBody }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "gmail-summary",
+      "name": "Enviar Gmail Resumen",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [900, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Diario (8:00 PM)": {
+      "main": [
+        [
+          {
+            "node": "Consultar Resumen Diario (API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Resumen Diario (API)": {
+      "main": [
+        [
+          {
+            "node": "Formatear Resumen HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Resumen HTML": {
+      "main": [
+        [
+          {
+            "node": "Enviar Gmail Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "name": "WF-001 - Recordatorio de Citas Próximas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ ($env.API_BASE_URL || 'http://localhost:8080') + '/api/v1/automation/appointments/upcoming?hours=24' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.N8N_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-get-upcoming",
+      "name": "Consultar Citas Próximas (API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\nfor (const item of items) {\n  const data = item.json;\n  if (Array.isArray(data)) {\n    for (const c of data) {\n      results.push({ json: c });\n    }\n  } else if (data && data.appointmentId) {\n    results.push({ json: data });\n  }\n}\nreturn results;"
+      },
+      "id": "code-normalize",
+      "name": "Normalizar Lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.patientEmail }}",
+        "subject": "=Recordatorio de Cita Médica - MediHealth Plus",
+        "message": "=Estimado/a {{ $json.patientFirstName }},\n\nLe recordamos su cita programada en MediHealth Plus:\n\n• Especialidad: {{ $json.specialty }}\n• Profesional: {{ $json.doctorName }}\n• Sede: {{ $json.location }}\n• Fecha y Hora: {{ $json.scheduledStartAt }}\n\nPor favor presentarse con 15 minutos de anticipación y su documento de identidad.\n\nCordialmente,\nEquipo MediHealth Plus",
+        "options": {}
+      },
+      "id": "gmail-send",
+      "name": "Enviar Gmail Recordatorio",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [900, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CONFIGURAR_EN_N8N_WEB",
+          "name": "Cuenta Gmail Laboratorio"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Consultar Citas Próximas (API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Citas Próximas (API)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Lista": {
+      "main": [
+        [
+          {
+            "node": "Enviar Gmail Recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
